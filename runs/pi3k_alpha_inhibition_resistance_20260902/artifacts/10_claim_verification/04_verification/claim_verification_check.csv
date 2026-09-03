@@ -1,0 +1,8 @@
+check_name,check_status,observed_value,notes
+review_csv_files_readable,pass,0,All review CSV files were readable.
+all_claims_reviewed_once,pass,123/123,Every claim has exactly one review row.
+only_manifest_claims_reviewed,pass,0,No extra claim IDs appear in review outputs.
+allowed_verification_statuses,pass,123,All verification statuses are allowed.
+evidence_summaries_populated,pass,123,Every claim has a substantive evidence summary.
+problem_claims_have_corrections,pass,5,Every non-supported claim has a corrected claim suggestion.
+citation_metadata_preserved,pass,123,Review rows preserve manifest cited paper IDs and citation IDs.

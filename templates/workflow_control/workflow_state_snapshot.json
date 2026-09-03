@@ -1,0 +1,10 @@
+{
+  "schema_version": 1,
+  "run_dir": "",
+  "sqlite_path": "artifacts/00_workflow_control/01_state/workflow_state.sqlite",
+  "status": "initialized",
+  "current_step": "subsection_retrieval",
+  "subsection_count": 0,
+  "draft_citation_count": 0,
+  "next_action": ""
+}

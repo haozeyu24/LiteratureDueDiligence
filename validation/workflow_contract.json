@@ -1,0 +1,2344 @@
+{
+  "schema_version": 1,
+  "artifact_policy": "workflow_only",
+  "ignored_file_names": [
+    ".DS_Store"
+  ],
+  "steps": {
+    "prompt_intake": {
+      "description": "Convert the original user prompt into structured run inputs.",
+      "required_files": [
+        {
+          "path": "original_user_prompt.md",
+          "min_bytes": 20,
+          "required_markers": [
+            "# Original User Prompt"
+          ]
+        },
+        {
+          "path": "logs/agent_screen_log.md",
+          "min_bytes": 80,
+          "required_markers": [
+            "# Agent Screen Log",
+            "## "
+          ]
+        },
+        {
+          "path": "inputs/structured_instruction.md",
+          "min_bytes": 800,
+          "required_markers": [
+            "# Structured Review Instruction",
+            "## Objective",
+            "## Primary Scope",
+            "## Retrieval Scope",
+            "### Source And Venue Trust",
+            "## Claim Verification Rules",
+            "### Full-Text Handling",
+            "## Uncertainty And Controversy Guidance"
+          ]
+        },
+        {
+          "path": "inputs/run_config.md",
+          "min_bytes": 300,
+          "required_markers": [
+            "# Run Config",
+            "`workflow_mode`",
+            "`initial_draft_expansion_policy`: `expansive_topic_map`",
+            "`min_initial_draft_subsections`",
+            "`min_words_per_substantive_subsection`",
+            "`min_paragraphs_per_substantive_subsection`",
+            "`allow_preprints`: `true`",
+            "`full_text_policy`: `full_text_preferred_title_abstract_fallback`",
+            "`missing_full_text_policy`: `create_user_download_queue`",
+            "`primary_discovery_source`: `pubmed`",
+            "`venue_blocklist_path`: `resources/journal_blocklist.csv`",
+            "`api_dependency`: `openai_embeddings_required_for_stage_6`",
+            "`human_final_inspection_required`: `true`"
+          ]
+        },
+        {
+          "path": "inputs/intake_self_check.md",
+          "min_bytes": 250,
+          "required_markers": [
+            "# Intake Self-Check",
+            "## Prompt Clarity",
+            "## Missing Information",
+            "## Recommended Next Step"
+          ]
+        }
+      ],
+      "allowed_paths": [
+        "original_user_prompt.md",
+        "logs/agent_screen_log.md",
+        "inputs/structured_instruction.md",
+        "inputs/run_config.md",
+        "inputs/intake_self_check.md"
+      ],
+      "disallowed_path_patterns": [
+        "drafts/",
+        "artifacts/",
+        "papers/",
+        "pdfs/",
+        "references/",
+        "bibliography",
+        "paper_list",
+        "search",
+        "review.md",
+        "final"
+      ]
+    },
+    "initial_review_draft": {
+      "description": "Create a verification-ready initial review draft and check it against drafting instructions.",
+      "required_files": [
+        {
+          "path": "original_user_prompt.md",
+          "min_bytes": 20,
+          "required_markers": [
+            "# Original User Prompt"
+          ]
+        },
+        {
+          "path": "logs/agent_screen_log.md",
+          "min_bytes": 80,
+          "required_markers": [
+            "# Agent Screen Log",
+            "## "
+          ]
+        },
+        {
+          "path": "inputs/structured_instruction.md",
+          "min_bytes": 800,
+          "required_markers": [
+            "# Structured Review Instruction",
+            "## Objective",
+            "## Primary Scope",
+            "## Retrieval Scope",
+            "### Source And Venue Trust",
+            "## Claim Verification Rules",
+            "### Full-Text Handling"
+          ]
+        },
+        {
+          "path": "inputs/run_config.md",
+          "min_bytes": 300,
+          "required_markers": [
+            "# Run Config",
+            "`primary_discovery_source`: `pubmed`",
+            "`initial_draft_expansion_policy`: `expansive_topic_map`",
+            "`min_initial_draft_subsections`",
+            "`allow_preprints`: `true`",
+            "`full_text_policy`: `full_text_preferred_title_abstract_fallback`"
+          ]
+        },
+        {
+          "path": "inputs/intake_self_check.md",
+          "min_bytes": 250,
+          "required_markers": [
+            "# Intake Self-Check",
+            "## Recommended Next Step"
+          ]
+        },
+        {
+          "path": "drafts/initial_review.md",
+          "min_bytes": 2000,
+          "required_markers": [
+            "# ",
+            "## Draft Status",
+            "`draft_access_status` values are provisional",
+            "## Executive Summary",
+            "### ",
+            "#### Citation Register",
+            "| citation_id | citation | PMID | DOI | evidence_role | draft_access_status | venue_trust_label | discovery_provenance | notes |"
+          ]
+        },
+        {
+          "path": "artifacts/01_draft_validation/README.md",
+          "min_bytes": 150,
+          "required_markers": [
+            "# Draft Validation Artifacts",
+            "01_checks"
+          ]
+        },
+        {
+          "path": "artifacts/01_draft_validation/01_checks/draft_instruction_check.md",
+          "min_bytes": 500,
+          "required_markers": [
+            "# Draft Instruction Check",
+            "## Overall Status",
+            "`pass`",
+            "## Scope Compliance",
+            "## Breadth Compliance",
+            "## Subsection Substance Compliance",
+            "## Citation Register Compliance",
+            "## Access Label Compliance",
+            "## Venue Label Compliance",
+            "## Discovery Provenance Compliance",
+            "## Ready For Claim Extraction",
+            "`yes`"
+          ]
+        }
+      ],
+      "allowed_paths": [
+        "original_user_prompt.md",
+        "logs/agent_screen_log.md",
+        "inputs/structured_instruction.md",
+        "inputs/run_config.md",
+        "inputs/intake_self_check.md",
+        "drafts/initial_review.md",
+        "artifacts/README.md",
+        "artifacts/01_draft_validation/README.md",
+        "artifacts/01_draft_validation/01_checks/draft_instruction_check.md"
+      ],
+      "disallowed_path_patterns": [
+        "artifacts/claims/",
+        "artifacts/search/",
+        "artifacts/evidence_packets/",
+        "artifacts/verification/",
+        "papers/",
+        "pdfs/",
+        "references/",
+        "claim_manifest",
+        "search_plan",
+        "evidence_packet",
+        "final_review"
+      ]
+    },
+    "subsection_retrieval": {
+      "description": "Create subsection-level PubMed query, abstract triage, recall, and full-text routing artifacts.",
+      "required_files": [
+        {
+          "path": "original_user_prompt.md",
+          "min_bytes": 20,
+          "required_markers": [
+            "# Original User Prompt"
+          ]
+        },
+        {
+          "path": "logs/agent_screen_log.md",
+          "min_bytes": 80,
+          "required_markers": [
+            "# Agent Screen Log",
+            "## "
+          ]
+        },
+        {
+          "path": "drafts/initial_review.md",
+          "min_bytes": 2000,
+          "required_markers": [
+            "## Draft Status",
+            "#### Citation Register"
+          ]
+        },
+        {
+          "path": "artifacts/00_workflow_control/README.md",
+          "min_bytes": 150,
+          "required_markers": [
+            "# Workflow Control Artifacts",
+            "01_state",
+            "02_snapshots"
+          ]
+        },
+        {
+          "path": "artifacts/README.md",
+          "min_bytes": 300,
+          "required_markers": [
+            "# Workflow Artifacts",
+            "00_workflow_control/",
+            "02_subsection_retrieval/"
+          ]
+        },
+        {
+          "path": "artifacts/00_workflow_control/01_state/workflow_state.sqlite",
+          "min_bytes": 1000,
+          "binary": true,
+          "required_markers": []
+        },
+        {
+          "path": "artifacts/00_workflow_control/02_snapshots/workflow_state_snapshot.json",
+          "min_bytes": 120,
+          "required_markers": [
+            "\"schema_version\"",
+            "\"sqlite_path\"",
+            "\"current_step\": \"subsection_retrieval\"",
+            "\"subsection_count\"",
+            "\"draft_citation_count\""
+          ]
+        },
+        {
+          "path": "artifacts/02_subsection_retrieval/01_scope/subsection_manifest.csv",
+          "min_bytes": 120,
+          "required_markers": [
+            "subsection_id,chapter_index,chapter_title,subsection_index,subsection_title,draft_citation_ids,draft_known_pmids,subsection_scope_note"
+          ]
+        },
+        {
+          "path": "artifacts/02_subsection_retrieval/02_queries/controller_policy.md",
+          "min_bytes": 500,
+          "required_markers": [
+            "# Subsection Retrieval Controller Policy",
+            "## Query Count Heuristics",
+            "## Controller Actions",
+            "## Stop Rule"
+          ]
+        },
+        {
+          "path": "artifacts/02_subsection_retrieval/02_queries/abstract_review_rule.md",
+          "min_bytes": 500,
+          "required_markers": [
+            "# Abstract Review Rule",
+            "## Allowed Decisions",
+            "`include_primary`",
+            "`include_context`",
+            "`exclude_off_scope`",
+            "`exclude_wrong_level`",
+            "`exclude_low_quality_or_blocked`",
+            "`uncertain_full_text_needed`"
+          ]
+        },
+        {
+          "path": "artifacts/02_subsection_retrieval/02_queries/query_plan.csv",
+          "min_bytes": 150,
+          "required_markers": [
+            "subsection_id,query_id,query_type,pubmed_query,required_terms,optional_terms,excluded_terms,expected_result_band,recall_targets,query_rationale",
+            "high_precision",
+            "mechanism_expansion",
+            "context_expansion",
+            "recall_guard"
+          ]
+        },
+        {
+          "path": "artifacts/02_subsection_retrieval/02_queries/query_diagnostics.csv",
+          "min_bytes": 150,
+          "required_markers": [
+            "subsection_id,query_id,query,raw_hit_count,collected_count,truncated_by_constraint,sample_size,sample_strategy,sampled_on_scope_count,sampled_noise_count,estimated_precision,dominant_noise_classes,missing_concepts,recall_signals,decision,revision_rationale"
+          ]
+        },
+        {
+          "path": "artifacts/02_subsection_retrieval/03_pubmed/pubmed_records.jsonl",
+          "min_bytes": 20,
+          "required_markers": [
+            "\"pmid\"",
+            "\"title\"",
+            "\"source_query_ids\"",
+            "\"subsection_ids\""
+          ]
+        },
+        {
+          "path": "artifacts/02_subsection_retrieval/03_pubmed/pubmed_record_index.csv",
+          "min_bytes": 120,
+          "required_markers": [
+            "paper_id,PMID,PMCID,DOI,title,journal,publication_year,publication_types,source_query_ids,subsection_ids,record_path",
+            "sqlite://pubmed_records/"
+          ]
+        },
+        {
+          "path": "artifacts/02_subsection_retrieval/02_queries/search_iteration_log.csv",
+          "min_bytes": 120,
+          "required_markers": [
+            "subsection_id,query_id,iteration,run_status,result_count,count_status,controller_action,next_query_id,notes"
+          ]
+        },
+        {
+          "path": "artifacts/02_subsection_retrieval/06_outputs/subsection_metrics.csv",
+          "min_bytes": 200,
+          "required_markers": [
+            "subsection_id,queries_planned,queries_run,total_pubmed_returned,total_collected_for_review,draft_known_citation_count,draft_citations_recovered,draft_citation_recall_rate,abstracts_reviewed,abstract_include_primary_count,abstract_include_context_count,abstract_uncertain_full_text_needed_count,abstract_rejected_count,abstract_rejection_rate,rescue_reviewed,rescue_promoted_count,final_literature_set_count,full_text_download_queue_count,controller_status,notes"
+          ]
+        },
+        {
+          "path": "artifacts/02_subsection_retrieval/04_screening/abstract_triage_first_pass.csv",
+          "min_bytes": 150,
+          "required_markers": [
+            "subsection_id,paper_id,PMID,DOI,title,abstract,publication_types,year,source_query_ids,first_pass_decision,first_pass_rationale,first_pass_confidence,topic_match_type,semantic_fit_score,mechanism_match,entity_context_match,evidence_directness,key_relevant_abstract_text,missing_full_text_reason,triage_actor,synthesis_role,prescreen_hint,prescreen_rationale,prescreen_overlap_terms"
+          ]
+        },
+        {
+          "path": "artifacts/02_subsection_retrieval/04_screening/abstract_triage_rescue_pass.csv",
+          "min_bytes": 150,
+          "required_markers": [
+            "subsection_id,paper_id,PMID,DOI,title,abstract,publication_types,year,source_query_ids,first_pass_decision,first_pass_rationale,rescue_pass_decision,rescue_pass_rationale,rescue_pass_confidence,semantic_fit_score,mechanism_match,entity_context_match,evidence_directness,key_relevant_abstract_text,missing_full_text_reason,promotion_decision,synthesis_role"
+          ]
+        },
+        {
+          "path": "artifacts/02_subsection_retrieval/05_recall/draft_citation_recall_check.csv",
+          "min_bytes": 120,
+          "required_markers": [
+            "subsection_id,citation_id,citation,PMID,DOI,discovery_provenance,found_in_final_set,controller_decision,notes"
+          ]
+        },
+        {
+          "path": "artifacts/02_subsection_retrieval/06_outputs/final_literature_sets.csv",
+          "min_bytes": 150,
+          "required_markers": [
+            "subsection_id,paper_id,PMID,PMCID,DOI,title,journal,publication_year,article_type,abstract_review_decision,evidence_role,draft_access_status,verified_access_status,venue_trust_label,source_query_ids,reason"
+          ]
+        },
+        {
+          "path": "artifacts/02_subsection_retrieval/06_outputs/full_text_download_queue.csv",
+          "min_bytes": 100,
+          "required_markers": [
+            "subsection_id,paper_id,PMID,PMCID,DOI,title,why_full_text_needed,download_priority,user_action"
+          ]
+        },
+        {
+          "path": "artifacts/02_subsection_retrieval/06_outputs/subsection_retrieval_check.md",
+          "min_bytes": 500,
+          "required_markers": [
+            "# Subsection Retrieval Check",
+            "## Overall Status",
+            "`pass`",
+            "## Subsection Coverage",
+            "## Query Plan Compliance",
+            "## Abstract Review Rule Compliance",
+            "## Search Iteration Compliance",
+            "## Subsection Metrics Compliance",
+            "## Draft Citation Recall Compliance",
+            "## Final Literature Set Compliance",
+            "## Full-Text Download Queue Compliance",
+            "## PubMed Metadata Compliance",
+            "## Ready For PubMed Execution",
+            "## Ready For Abstract Review",
+            "`yes`"
+          ]
+        },
+        {
+          "path": "artifacts/02_subsection_retrieval/02_queries/query_execution_report.md",
+          "min_bytes": 500,
+          "required_markers": [
+            "# PubMed Query Execution Report",
+            "## Overall Status",
+            "`pass`",
+            "## Metadata Store",
+            "## Subsection Counts",
+            "## Next Step"
+          ]
+        }
+      ],
+      "allowed_paths": [
+        "original_user_prompt.md",
+        "logs/agent_screen_log.md",
+        "inputs/structured_instruction.md",
+        "inputs/run_config.md",
+        "inputs/intake_self_check.md",
+        "drafts/initial_review.md",
+        "artifacts/README.md",
+        "artifacts/01_draft_validation/README.md",
+        "artifacts/01_draft_validation/01_checks/draft_instruction_check.md",
+        "artifacts/00_workflow_control/README.md",
+        "artifacts/00_workflow_control/01_state/workflow_state.sqlite",
+        "artifacts/00_workflow_control/02_snapshots/workflow_state_snapshot.json",
+        "artifacts/02_subsection_retrieval/README.md",
+        "artifacts/02_subsection_retrieval/01_scope/subsection_manifest.csv",
+        "artifacts/02_subsection_retrieval/02_queries/controller_policy.md",
+        "artifacts/02_subsection_retrieval/02_queries/abstract_review_rule.md",
+        "artifacts/02_subsection_retrieval/02_queries/query_plan.csv",
+        "artifacts/02_subsection_retrieval/02_queries/query_diagnostics.csv",
+        "artifacts/02_subsection_retrieval/03_pubmed/pubmed_records.jsonl",
+        "artifacts/02_subsection_retrieval/03_pubmed/pubmed_record_index.csv",
+        "artifacts/02_subsection_retrieval/02_queries/search_iteration_log.csv",
+        "artifacts/02_subsection_retrieval/06_outputs/subsection_metrics.csv",
+        "artifacts/02_subsection_retrieval/04_screening/abstract_triage_first_pass.csv",
+        "artifacts/02_subsection_retrieval/04_screening/abstract_triage_rescue_pass.csv",
+        "artifacts/02_subsection_retrieval/05_recall/draft_citation_recall_check.csv",
+        "artifacts/02_subsection_retrieval/06_outputs/final_literature_sets.csv",
+        "artifacts/02_subsection_retrieval/06_outputs/full_text_download_queue.csv",
+        "artifacts/02_subsection_retrieval/06_outputs/subsection_retrieval_check.md",
+        "artifacts/02_subsection_retrieval/02_queries/query_execution_report.md"
+      ],
+      "disallowed_path_patterns": [
+        "artifacts/claims/",
+        "artifacts/evidence_packets/",
+        "artifacts/verification/",
+        "papers/",
+        "pdfs/",
+        "references/",
+        "claim_manifest",
+        "evidence_packet",
+        "rewritten_sections",
+        "final_review"
+      ]
+    },
+    "semantic_abstract_review_preflight": {
+      "description": "Block semantic abstract review unless subsection retrieval is fully ready.",
+      "required_files": [
+        {
+          "path": "drafts/initial_review.md",
+          "min_bytes": 2000,
+          "required_markers": [
+            "## Draft Status",
+            "#### Citation Register"
+          ]
+        },
+        {
+          "path": "logs/agent_screen_log.md",
+          "min_bytes": 80,
+          "required_markers": [
+            "# Agent Screen Log",
+            "## "
+          ]
+        },
+        {
+          "path": "artifacts/00_workflow_control/README.md",
+          "min_bytes": 150,
+          "required_markers": [
+            "# Workflow Control Artifacts",
+            "01_state",
+            "02_snapshots"
+          ]
+        },
+        {
+          "path": "artifacts/README.md",
+          "min_bytes": 300,
+          "required_markers": [
+            "# Workflow Artifacts",
+            "00_workflow_control/",
+            "02_subsection_retrieval/"
+          ]
+        },
+        {
+          "path": "artifacts/02_subsection_retrieval/01_scope/subsection_manifest.csv",
+          "min_bytes": 120,
+          "required_markers": [
+            "subsection_id,chapter_index,chapter_title,subsection_index,subsection_title,draft_citation_ids,draft_known_pmids,subsection_scope_note"
+          ]
+        },
+        {
+          "path": "artifacts/02_subsection_retrieval/02_queries/query_diagnostics.csv",
+          "min_bytes": 150,
+          "required_markers": [
+            "raw_hit_count",
+            "collected_count",
+            "decision"
+          ]
+        },
+        {
+          "path": "artifacts/02_subsection_retrieval/03_pubmed/pubmed_records.jsonl",
+          "min_bytes": 20,
+          "required_markers": [
+            "\"pmid\"",
+            "\"source_query_ids\"",
+            "\"subsection_ids\""
+          ]
+        },
+        {
+          "path": "artifacts/02_subsection_retrieval/03_pubmed/pubmed_record_index.csv",
+          "min_bytes": 120,
+          "required_markers": [
+            "paper_id,PMID,PMCID,DOI,title,journal,publication_year,publication_types,source_query_ids,subsection_ids,record_path"
+          ]
+        },
+        {
+          "path": "artifacts/02_subsection_retrieval/06_outputs/subsection_metrics.csv",
+          "min_bytes": 200,
+          "required_markers": [
+            "subsection_id,queries_planned,queries_run,total_pubmed_returned,total_collected_for_review,draft_known_citation_count,draft_citations_recovered,draft_citation_recall_rate,abstracts_reviewed,abstract_include_primary_count,abstract_include_context_count,abstract_uncertain_full_text_needed_count,abstract_rejected_count,abstract_rejection_rate,rescue_reviewed,rescue_promoted_count,final_literature_set_count,full_text_download_queue_count,controller_status,notes"
+          ]
+        },
+        {
+          "path": "artifacts/02_subsection_retrieval/04_screening/abstract_triage_first_pass.csv",
+          "min_bytes": 150,
+          "required_markers": [
+            "semantic_fit_score",
+            "mechanism_match",
+            "entity_context_match",
+            "evidence_directness",
+            "key_relevant_abstract_text",
+            "missing_full_text_reason"
+          ]
+        },
+        {
+          "path": "artifacts/02_subsection_retrieval/06_outputs/final_literature_sets.csv",
+          "min_bytes": 150,
+          "required_markers": [
+            "abstract_review_decision"
+          ]
+        },
+        {
+          "path": "artifacts/02_subsection_retrieval/02_queries/query_execution_report.md",
+          "min_bytes": 500,
+          "required_markers": [
+            "# PubMed Query Execution Report",
+            "## Subsection Counts",
+            "## Next Step"
+          ]
+        },
+        {
+          "path": "artifacts/00_workflow_control/01_state/workflow_state.sqlite",
+          "min_bytes": 1000,
+          "binary": true,
+          "required_markers": []
+        }
+      ],
+      "allowed_paths": [
+        "original_user_prompt.md",
+        "logs/agent_screen_log.md",
+        "inputs/structured_instruction.md",
+        "inputs/run_config.md",
+        "inputs/intake_self_check.md",
+        "drafts/initial_review.md",
+        "artifacts/README.md",
+        "artifacts/01_draft_validation/README.md",
+        "artifacts/01_draft_validation/01_checks/draft_instruction_check.md",
+        "artifacts/00_workflow_control/README.md",
+        "artifacts/00_workflow_control/01_state/workflow_state.sqlite",
+        "artifacts/00_workflow_control/02_snapshots/workflow_state_snapshot.json",
+        "artifacts/02_subsection_retrieval/README.md",
+        "artifacts/02_subsection_retrieval/01_scope/subsection_manifest.csv",
+        "artifacts/02_subsection_retrieval/02_queries/controller_policy.md",
+        "artifacts/02_subsection_retrieval/02_queries/abstract_review_rule.md",
+        "artifacts/02_subsection_retrieval/02_queries/query_plan.csv",
+        "artifacts/02_subsection_retrieval/02_queries/query_diagnostics.csv",
+        "artifacts/02_subsection_retrieval/03_pubmed/pubmed_records.jsonl",
+        "artifacts/02_subsection_retrieval/03_pubmed/pubmed_record_index.csv",
+        "artifacts/02_subsection_retrieval/02_queries/search_iteration_log.csv",
+        "artifacts/02_subsection_retrieval/06_outputs/subsection_metrics.csv",
+        "artifacts/02_subsection_retrieval/04_screening/abstract_triage_first_pass.csv",
+        "artifacts/02_subsection_retrieval/04_screening/abstract_triage_rescue_pass.csv",
+        "artifacts/02_subsection_retrieval/05_recall/draft_citation_recall_check.csv",
+        "artifacts/02_subsection_retrieval/06_outputs/final_literature_sets.csv",
+        "artifacts/02_subsection_retrieval/06_outputs/full_text_download_queue.csv",
+        "artifacts/02_subsection_retrieval/06_outputs/subsection_retrieval_check.md",
+        "artifacts/02_subsection_retrieval/02_queries/query_execution_report.md"
+      ],
+      "disallowed_path_patterns": [
+        "artifacts/03_semantic_abstract_review/",
+        "artifacts/claims/",
+        "artifacts/evidence_packets/",
+        "artifacts/verification/",
+        "papers/",
+        "pdfs/",
+        "references/",
+        "claim_manifest",
+        "evidence_packet",
+        "rewritten_sections",
+        "final_review"
+      ]
+    },
+    "semantic_abstract_review_setup": {
+      "description": "Prepare parallelizable subsection-batched files for semantic abstract review.",
+      "required_files": [
+        {
+          "path": "artifacts/00_workflow_control/README.md",
+          "min_bytes": 150,
+          "required_markers": [
+            "# Workflow Control Artifacts",
+            "01_state",
+            "02_snapshots"
+          ]
+        },
+        {
+          "path": "logs/agent_screen_log.md",
+          "min_bytes": 80,
+          "required_markers": [
+            "# Agent Screen Log",
+            "## "
+          ]
+        },
+        {
+          "path": "artifacts/README.md",
+          "min_bytes": 300,
+          "required_markers": [
+            "# Workflow Artifacts",
+            "00_workflow_control/",
+            "02_subsection_retrieval/"
+          ]
+        },
+        {
+          "path": "artifacts/03_semantic_abstract_review/01_setup/reviewer_instructions.md",
+          "min_bytes": 1000,
+          "required_markers": [
+            "# Semantic Abstract Review Worker Instructions",
+            "## Required Decisions",
+            "## Inclusion Standard",
+            "## Output Rule"
+          ]
+        },
+        {
+          "path": "artifacts/03_semantic_abstract_review/01_setup/batch_manifest.csv",
+          "min_bytes": 120,
+          "required_markers": [
+            "batch_id,subsection_id,batch_index,candidate_count,context_path,batch_path,review_status,assigned_worker,output_path,notes"
+          ]
+        },
+        {
+          "path": "artifacts/03_semantic_abstract_review/01_setup/abstract_review_status.csv",
+          "min_bytes": 120,
+          "required_markers": [
+            "batch_id,subsection_id,batch_index,candidate_count,context_path,batch_path,review_status,assigned_worker,output_path,notes"
+          ]
+        },
+        {
+          "path": "artifacts/03_semantic_abstract_review/01_setup/semantic_abstract_review_setup_check.md",
+          "min_bytes": 500,
+          "required_markers": [
+            "# Semantic Abstract Review Setup Check",
+            "## Overall Status",
+            "`pass`",
+            "## Preflight Compliance",
+            "## Batch Coverage",
+            "## Semantic Field Compliance",
+            "## Parallelization Readiness",
+            "`yes`",
+            "## Ready For Worker Review"
+          ]
+        },
+        {
+          "path": "artifacts/00_workflow_control/01_state/workflow_state.sqlite",
+          "min_bytes": 1000,
+          "binary": true,
+          "required_markers": []
+        }
+      ],
+      "allowed_paths": [
+        "original_user_prompt.md",
+        "logs/agent_screen_log.md",
+        "inputs/structured_instruction.md",
+        "inputs/run_config.md",
+        "inputs/intake_self_check.md",
+        "drafts/initial_review.md",
+        "artifacts/README.md",
+        "artifacts/01_draft_validation/README.md",
+        "artifacts/01_draft_validation/01_checks/draft_instruction_check.md",
+        "artifacts/00_workflow_control/README.md",
+        "artifacts/00_workflow_control/01_state/workflow_state.sqlite",
+        "artifacts/00_workflow_control/02_snapshots/workflow_state_snapshot.json",
+        "artifacts/02_subsection_retrieval/README.md",
+        "artifacts/02_subsection_retrieval/01_scope/subsection_manifest.csv",
+        "artifacts/02_subsection_retrieval/02_queries/controller_policy.md",
+        "artifacts/02_subsection_retrieval/02_queries/abstract_review_rule.md",
+        "artifacts/02_subsection_retrieval/02_queries/query_plan.csv",
+        "artifacts/02_subsection_retrieval/02_queries/query_diagnostics.csv",
+        "artifacts/02_subsection_retrieval/03_pubmed/pubmed_records.jsonl",
+        "artifacts/02_subsection_retrieval/03_pubmed/pubmed_record_index.csv",
+        "artifacts/02_subsection_retrieval/02_queries/search_iteration_log.csv",
+        "artifacts/02_subsection_retrieval/06_outputs/subsection_metrics.csv",
+        "artifacts/02_subsection_retrieval/04_screening/abstract_triage_first_pass.csv",
+        "artifacts/02_subsection_retrieval/04_screening/abstract_triage_rescue_pass.csv",
+        "artifacts/02_subsection_retrieval/05_recall/draft_citation_recall_check.csv",
+        "artifacts/02_subsection_retrieval/06_outputs/final_literature_sets.csv",
+        "artifacts/02_subsection_retrieval/06_outputs/full_text_download_queue.csv",
+        "artifacts/02_subsection_retrieval/06_outputs/subsection_retrieval_check.md",
+        "artifacts/02_subsection_retrieval/02_queries/query_execution_report.md",
+        "artifacts/03_semantic_abstract_review/README.md",
+        "artifacts/03_semantic_abstract_review/01_setup/reviewer_instructions.md",
+        "artifacts/03_semantic_abstract_review/01_setup/batch_manifest.csv",
+        "artifacts/03_semantic_abstract_review/01_setup/abstract_review_status.csv",
+        "artifacts/03_semantic_abstract_review/01_setup/semantic_abstract_review_setup_check.md"
+      ],
+      "allowed_path_prefixes": [
+        "artifacts/03_semantic_abstract_review/03_batches",
+        "artifacts/03_semantic_abstract_review/02_context"
+      ],
+      "disallowed_path_patterns": [
+        "artifacts/03_semantic_abstract_review/04_reviewed_batches/",
+        "artifacts/claims/",
+        "artifacts/evidence_packets/",
+        "artifacts/verification/",
+        "papers/",
+        "pdfs/",
+        "references/",
+        "claim_manifest",
+        "evidence_packet",
+        "rewritten_sections",
+        "final_review"
+      ]
+    },
+    "semantic_abstract_review_pilot": {
+      "description": "Validate one or more completed semantic abstract-review pilot batches.",
+      "required_files": [
+        {
+          "path": "artifacts/00_workflow_control/README.md",
+          "min_bytes": 150,
+          "required_markers": [
+            "# Workflow Control Artifacts",
+            "01_state",
+            "02_snapshots"
+          ]
+        },
+        {
+          "path": "logs/agent_screen_log.md",
+          "min_bytes": 80,
+          "required_markers": [
+            "# Agent Screen Log",
+            "## "
+          ]
+        },
+        {
+          "path": "artifacts/README.md",
+          "min_bytes": 300,
+          "required_markers": [
+            "# Workflow Artifacts",
+            "00_workflow_control/",
+            "02_subsection_retrieval/"
+          ]
+        },
+        {
+          "path": "artifacts/03_semantic_abstract_review/01_setup/reviewer_instructions.md",
+          "min_bytes": 1000,
+          "required_markers": [
+            "# Semantic Abstract Review Worker Instructions",
+            "## Required Decisions",
+            "## Inclusion Standard",
+            "## Output Rule"
+          ]
+        },
+        {
+          "path": "artifacts/03_semantic_abstract_review/01_setup/batch_manifest.csv",
+          "min_bytes": 120,
+          "required_markers": [
+            "batch_id,subsection_id,batch_index,candidate_count,context_path,batch_path,review_status,assigned_worker,output_path,notes"
+          ]
+        },
+        {
+          "path": "artifacts/03_semantic_abstract_review/01_setup/semantic_abstract_review_setup_check.md",
+          "min_bytes": 500,
+          "required_markers": [
+            "# Semantic Abstract Review Setup Check",
+            "## SQLite Source Compliance",
+            "## Ready For Worker Review"
+          ]
+        },
+        {
+          "path": "artifacts/00_workflow_control/01_state/workflow_state.sqlite",
+          "min_bytes": 1000,
+          "binary": true,
+          "required_markers": []
+        }
+      ],
+      "allowed_paths": [
+        "original_user_prompt.md",
+        "logs/agent_screen_log.md",
+        "inputs/structured_instruction.md",
+        "inputs/run_config.md",
+        "inputs/intake_self_check.md",
+        "drafts/initial_review.md",
+        "artifacts/README.md",
+        "artifacts/01_draft_validation/README.md",
+        "artifacts/01_draft_validation/01_checks/draft_instruction_check.md",
+        "artifacts/00_workflow_control/README.md",
+        "artifacts/00_workflow_control/01_state/workflow_state.sqlite",
+        "artifacts/00_workflow_control/02_snapshots/workflow_state_snapshot.json",
+        "artifacts/02_subsection_retrieval/README.md",
+        "artifacts/02_subsection_retrieval/01_scope/subsection_manifest.csv",
+        "artifacts/02_subsection_retrieval/02_queries/controller_policy.md",
+        "artifacts/02_subsection_retrieval/02_queries/abstract_review_rule.md",
+        "artifacts/02_subsection_retrieval/02_queries/query_plan.csv",
+        "artifacts/02_subsection_retrieval/02_queries/query_diagnostics.csv",
+        "artifacts/02_subsection_retrieval/03_pubmed/pubmed_records.jsonl",
+        "artifacts/02_subsection_retrieval/03_pubmed/pubmed_record_index.csv",
+        "artifacts/02_subsection_retrieval/02_queries/search_iteration_log.csv",
+        "artifacts/02_subsection_retrieval/06_outputs/subsection_metrics.csv",
+        "artifacts/02_subsection_retrieval/04_screening/abstract_triage_first_pass.csv",
+        "artifacts/02_subsection_retrieval/04_screening/abstract_triage_rescue_pass.csv",
+        "artifacts/02_subsection_retrieval/05_recall/draft_citation_recall_check.csv",
+        "artifacts/02_subsection_retrieval/06_outputs/final_literature_sets.csv",
+        "artifacts/02_subsection_retrieval/06_outputs/full_text_download_queue.csv",
+        "artifacts/02_subsection_retrieval/06_outputs/subsection_retrieval_check.md",
+        "artifacts/02_subsection_retrieval/02_queries/query_execution_report.md",
+        "artifacts/03_semantic_abstract_review/README.md",
+        "artifacts/03_semantic_abstract_review/01_setup/reviewer_instructions.md",
+        "artifacts/03_semantic_abstract_review/01_setup/batch_manifest.csv",
+        "artifacts/03_semantic_abstract_review/01_setup/abstract_review_status.csv",
+        "artifacts/03_semantic_abstract_review/01_setup/semantic_abstract_review_setup_check.md"
+      ],
+      "allowed_path_prefixes": [
+        "artifacts/03_semantic_abstract_review/03_batches",
+        "artifacts/03_semantic_abstract_review/02_context",
+        "artifacts/03_semantic_abstract_review/04_reviewed_batches"
+      ],
+      "disallowed_path_patterns": [
+        "artifacts/claims/",
+        "artifacts/evidence_packets/",
+        "artifacts/verification/",
+        "papers/",
+        "pdfs/",
+        "references/",
+        "claim_manifest",
+        "evidence_packet",
+        "rewritten_sections",
+        "final_review"
+      ]
+    },
+    "semantic_abstract_review_complete": {
+      "description": "Validate complete semantic abstract review after every batch is reviewed and merged into SQLite.",
+      "required_files": [
+        {
+          "path": "artifacts/00_workflow_control/README.md",
+          "min_bytes": 150,
+          "required_markers": [
+            "# Workflow Control Artifacts",
+            "01_state",
+            "02_snapshots"
+          ]
+        },
+        {
+          "path": "logs/agent_screen_log.md",
+          "min_bytes": 80,
+          "required_markers": [
+            "# Agent Screen Log",
+            "## "
+          ]
+        },
+        {
+          "path": "artifacts/README.md",
+          "min_bytes": 300,
+          "required_markers": [
+            "# Workflow Artifacts",
+            "00_workflow_control/",
+            "02_subsection_retrieval/"
+          ]
+        },
+        {
+          "path": "artifacts/03_semantic_abstract_review/01_setup/reviewer_instructions.md",
+          "min_bytes": 1000,
+          "required_markers": [
+            "# Semantic Abstract Review Worker Instructions",
+            "## Required Decisions",
+            "## Inclusion Standard",
+            "## Output Rule"
+          ]
+        },
+        {
+          "path": "artifacts/03_semantic_abstract_review/01_setup/batch_manifest.csv",
+          "min_bytes": 120,
+          "required_markers": [
+            "batch_id,subsection_id,batch_index,candidate_count,context_path,batch_path,review_status,assigned_worker,output_path,notes"
+          ]
+        },
+        {
+          "path": "artifacts/03_semantic_abstract_review/01_setup/abstract_review_status.csv",
+          "min_bytes": 120,
+          "required_markers": [
+            "batch_id,subsection_id,batch_index,candidate_count,context_path,batch_path,review_status,assigned_worker,output_path,notes"
+          ]
+        },
+        {
+          "path": "artifacts/03_semantic_abstract_review/01_setup/semantic_abstract_review_setup_check.md",
+          "min_bytes": 500,
+          "required_markers": [
+            "# Semantic Abstract Review Setup Check",
+            "## SQLite Source Compliance",
+            "## Ready For Worker Review"
+          ]
+        },
+        {
+          "path": "artifacts/03_semantic_abstract_review/05_outputs/semantic_abstract_review_merge_report.md",
+          "min_bytes": 300,
+          "required_markers": [
+            "# Semantic Abstract Review Merge Report",
+            "## SQLite Merge",
+            "## Decision Counts",
+            "## Deduped Draft-PMID Recall",
+            "## Paper-Level Rollup",
+            "## Next-Step Primary Cohort"
+          ]
+        },
+        {
+          "path": "artifacts/00_workflow_control/01_state/workflow_state.sqlite",
+          "min_bytes": 1000,
+          "binary": true,
+          "required_markers": []
+        }
+      ],
+      "allowed_paths": [
+        "original_user_prompt.md",
+        "logs/agent_screen_log.md",
+        "inputs/structured_instruction.md",
+        "inputs/run_config.md",
+        "inputs/intake_self_check.md",
+        "drafts/initial_review.md",
+        "artifacts/README.md",
+        "artifacts/01_draft_validation/README.md",
+        "artifacts/01_draft_validation/01_checks/draft_instruction_check.md",
+        "artifacts/00_workflow_control/README.md",
+        "artifacts/00_workflow_control/01_state/workflow_state.sqlite",
+        "artifacts/00_workflow_control/02_snapshots/workflow_state_snapshot.json",
+        "artifacts/02_subsection_retrieval/README.md",
+        "artifacts/02_subsection_retrieval/01_scope/subsection_manifest.csv",
+        "artifacts/02_subsection_retrieval/02_queries/controller_policy.md",
+        "artifacts/02_subsection_retrieval/02_queries/abstract_review_rule.md",
+        "artifacts/02_subsection_retrieval/02_queries/query_plan.csv",
+        "artifacts/02_subsection_retrieval/02_queries/query_diagnostics.csv",
+        "artifacts/02_subsection_retrieval/03_pubmed/pubmed_records.jsonl",
+        "artifacts/02_subsection_retrieval/03_pubmed/pubmed_record_index.csv",
+        "artifacts/02_subsection_retrieval/02_queries/search_iteration_log.csv",
+        "artifacts/02_subsection_retrieval/06_outputs/subsection_metrics.csv",
+        "artifacts/02_subsection_retrieval/04_screening/abstract_triage_first_pass.csv",
+        "artifacts/02_subsection_retrieval/04_screening/abstract_triage_rescue_pass.csv",
+        "artifacts/02_subsection_retrieval/05_recall/draft_citation_recall_check.csv",
+        "artifacts/02_subsection_retrieval/06_outputs/final_literature_sets.csv",
+        "artifacts/02_subsection_retrieval/06_outputs/full_text_download_queue.csv",
+        "artifacts/02_subsection_retrieval/06_outputs/subsection_retrieval_check.md",
+        "artifacts/02_subsection_retrieval/02_queries/query_execution_report.md",
+        "artifacts/03_semantic_abstract_review/README.md",
+        "artifacts/03_semantic_abstract_review/01_setup/reviewer_instructions.md",
+        "artifacts/03_semantic_abstract_review/01_setup/batch_manifest.csv",
+        "artifacts/03_semantic_abstract_review/01_setup/abstract_review_status.csv",
+        "artifacts/03_semantic_abstract_review/01_setup/semantic_abstract_review_setup_check.md",
+        "artifacts/03_semantic_abstract_review/05_outputs/semantic_abstract_review_merge_report.md"
+      ],
+      "allowed_path_prefixes": [
+        "artifacts/03_semantic_abstract_review/03_batches",
+        "artifacts/03_semantic_abstract_review/02_context",
+        "artifacts/03_semantic_abstract_review/04_reviewed_batches"
+      ],
+      "disallowed_path_patterns": [
+        "artifacts/claims/",
+        "artifacts/evidence_packets/",
+        "artifacts/verification/",
+        "papers/",
+        "pdfs/",
+        "references/",
+        "claim_manifest",
+        "evidence_packet",
+        "rewritten_sections",
+        "final_review"
+      ]
+    },
+    "primary_full_text_ingestion": {
+      "description": "Validate Stage 5 primary full-text ingestion, including normalized PMC/PDF outputs or a deliberate manual PDF pause.",
+      "required_files": [
+        {
+          "path": "logs/agent_screen_log.md",
+          "min_bytes": 80,
+          "required_markers": [
+            "# Agent Screen Log",
+            "## "
+          ]
+        },
+        {
+          "path": "artifacts/00_workflow_control/README.md",
+          "min_bytes": 150,
+          "required_markers": [
+            "# Workflow Control Artifacts",
+            "01_state",
+            "02_snapshots"
+          ]
+        },
+        {
+          "path": "artifacts/00_workflow_control/01_state/workflow_state.sqlite",
+          "min_bytes": 1000,
+          "binary": true,
+          "required_markers": []
+        },
+        {
+          "path": "artifacts/04_primary_full_text_ingestion/README.md",
+          "min_bytes": 300,
+          "required_markers": [
+            "# Primary Full-Text Ingestion Artifacts",
+            "Only two full-text source formats",
+            "user PDF dropbox"
+          ]
+        },
+        {
+          "path": "artifacts/04_primary_full_text_ingestion/01_targets/primary_fulltext_targets.csv",
+          "min_bytes": 120,
+          "required_markers": [
+            "paper_id,pmid,pmcid,doi,title,primary_subsection_count,best_evidence_role"
+          ]
+        },
+        {
+          "path": "artifacts/04_primary_full_text_ingestion/02_discovery/fulltext_source_candidates.csv",
+          "min_bytes": 80,
+          "required_markers": [
+            "paper_id,pmid,pmcid,doi,source_name,source_format,source_url,discovery_status,notes"
+          ]
+        },
+        {
+          "path": "artifacts/04_primary_full_text_ingestion/05_user_pdf_request/manual_pdf_queue.csv",
+          "min_bytes": 100,
+          "required_markers": [
+            "paper_id,pmid,pmcid,doi,title,linked_paper_ids,linked_pmids,linked_dois,duplicate_group_size,queue_reason,preferred_source,expected_filename,dropbox_path,notes"
+          ]
+        },
+        {
+          "path": "artifacts/04_primary_full_text_ingestion/05_user_pdf_request/user_pdf_pause.md",
+          "min_bytes": 150,
+          "required_markers": [
+            "# User PDF Pause"
+          ]
+        },
+        {
+          "path": "artifacts/04_primary_full_text_ingestion/06_outputs/import_status.csv",
+          "min_bytes": 150,
+          "required_markers": [
+            "paper_id,pmid,pmcid,doi,title,ingestion_status,source_format,access_source,source_url,source_path,normalized_path,text_char_count,section_count,pmc_xml_status,pdf_status,parser_status,user_pdf_required,notes"
+          ]
+        },
+        {
+          "path": "artifacts/04_primary_full_text_ingestion/06_outputs/pdf_parse_report.csv",
+          "min_bytes": 50,
+          "required_markers": [
+            "paper_id,pmid,doi,title,pdf_path,tei_path,normalized_path,parse_status,notes"
+          ]
+        },
+        {
+          "path": "artifacts/04_primary_full_text_ingestion/06_outputs/narrative_qc_report.csv",
+          "min_bytes": 150,
+          "required_markers": [
+            "paper_id,pmid,pmcid,doi,title,source_format,raw_chars,narrative_chars,retention_ratio,kept_section_count,excluded_section_count,excluded_char_count,chunk_count,warning_flags,review_recommendation,kept_section_titles,excluded_section_titles"
+          ]
+        },
+        {
+          "path": "artifacts/04_primary_full_text_ingestion/06_outputs/ingestion_summary.md",
+          "min_bytes": 300,
+          "required_markers": [
+            "# Primary Full-Text Ingestion Summary",
+            "## Counts",
+            "## Manual PDF Gate"
+          ]
+        }
+      ],
+      "allowed_paths": [
+        "original_user_prompt.md",
+        "logs/agent_screen_log.md",
+        "inputs/structured_instruction.md",
+        "inputs/run_config.md",
+        "inputs/intake_self_check.md",
+        "drafts/initial_review.md",
+        "artifacts/README.md",
+        "artifacts/01_draft_validation/README.md",
+        "artifacts/01_draft_validation/01_checks/draft_instruction_check.md",
+        "artifacts/00_workflow_control/README.md",
+        "artifacts/00_workflow_control/01_state/workflow_state.sqlite",
+        "artifacts/00_workflow_control/02_snapshots/workflow_state_snapshot.json",
+        "artifacts/02_subsection_retrieval/README.md",
+        "artifacts/02_subsection_retrieval/01_scope/subsection_manifest.csv",
+        "artifacts/02_subsection_retrieval/02_queries/controller_policy.md",
+        "artifacts/02_subsection_retrieval/02_queries/abstract_review_rule.md",
+        "artifacts/02_subsection_retrieval/02_queries/query_plan.csv",
+        "artifacts/02_subsection_retrieval/02_queries/query_diagnostics.csv",
+        "artifacts/02_subsection_retrieval/03_pubmed/pubmed_records.jsonl",
+        "artifacts/02_subsection_retrieval/03_pubmed/pubmed_record_index.csv",
+        "artifacts/02_subsection_retrieval/02_queries/search_iteration_log.csv",
+        "artifacts/02_subsection_retrieval/06_outputs/subsection_metrics.csv",
+        "artifacts/02_subsection_retrieval/04_screening/abstract_triage_first_pass.csv",
+        "artifacts/02_subsection_retrieval/04_screening/abstract_triage_rescue_pass.csv",
+        "artifacts/02_subsection_retrieval/05_recall/draft_citation_recall_check.csv",
+        "artifacts/02_subsection_retrieval/06_outputs/final_literature_sets.csv",
+        "artifacts/02_subsection_retrieval/06_outputs/full_text_download_queue.csv",
+        "artifacts/02_subsection_retrieval/06_outputs/subsection_retrieval_check.md",
+        "artifacts/02_subsection_retrieval/02_queries/query_execution_report.md",
+        "artifacts/03_semantic_abstract_review/README.md",
+        "artifacts/03_semantic_abstract_review/01_setup/reviewer_instructions.md",
+        "artifacts/03_semantic_abstract_review/01_setup/batch_manifest.csv",
+        "artifacts/03_semantic_abstract_review/01_setup/abstract_review_status.csv",
+        "artifacts/03_semantic_abstract_review/01_setup/semantic_abstract_review_setup_check.md",
+        "artifacts/03_semantic_abstract_review/05_outputs/semantic_abstract_review_merge_report.md",
+        "artifacts/04_primary_full_text_ingestion/README.md",
+        "artifacts/04_primary_full_text_ingestion/01_targets/primary_fulltext_targets.csv",
+        "artifacts/04_primary_full_text_ingestion/02_discovery/fulltext_source_candidates.csv",
+        "artifacts/04_primary_full_text_ingestion/05_user_pdf_request/manual_pdf_queue.csv",
+        "artifacts/04_primary_full_text_ingestion/05_user_pdf_request/user_pdf_pause.md",
+        "artifacts/04_primary_full_text_ingestion/06_outputs/import_status.csv",
+        "artifacts/04_primary_full_text_ingestion/06_outputs/pdf_parse_report.csv",
+        "artifacts/04_primary_full_text_ingestion/06_outputs/narrative_qc_report.csv",
+        "artifacts/04_primary_full_text_ingestion/06_outputs/ingestion_summary.md"
+      ],
+      "allowed_path_prefixes": [
+        "artifacts/03_semantic_abstract_review/03_batches",
+        "artifacts/03_semantic_abstract_review/02_context",
+        "artifacts/03_semantic_abstract_review/04_reviewed_batches",
+        "artifacts/04_primary_full_text_ingestion/03_pmc/01_raw_xml",
+        "artifacts/04_primary_full_text_ingestion/03_pmc/02_normalized",
+        "artifacts/04_primary_full_text_ingestion/04_pdf/01_staged",
+        "artifacts/04_primary_full_text_ingestion/04_pdf/02_parser_cache",
+        "artifacts/04_primary_full_text_ingestion/04_pdf/03_normalized",
+        "artifacts/04_primary_full_text_ingestion/05_user_pdf_request/01_user_pdf_dropbox"
+      ],
+      "disallowed_path_patterns": [
+        "artifacts/claims/",
+        "artifacts/evidence_packets/",
+        "artifacts/verification/",
+        "claim_manifest",
+        "evidence_packet",
+        "rewritten_sections",
+        "final_review",
+        ".docx",
+        ".pptx"
+      ]
+    },
+    "full_text_rag_index": {
+      "description": "Validate Stage 6 full-text RAG indexing, including flattened chunks, BM25 lexical index, required vector index, hybrid retrieval config, and SQLite mirrors.",
+      "required_files": [
+        {
+          "path": "logs/agent_screen_log.md",
+          "min_bytes": 80,
+          "required_markers": [
+            "# Agent Screen Log",
+            "## "
+          ]
+        },
+        {
+          "path": "artifacts/00_workflow_control/01_state/workflow_state.sqlite",
+          "min_bytes": 1000,
+          "binary": true,
+          "required_markers": []
+        },
+        {
+          "path": "artifacts/05_full_text_rag_index/README.md",
+          "min_bytes": 300,
+          "required_markers": [
+            "# Full-Text RAG Index Artifacts",
+            "BM25",
+            "Qdrant"
+          ]
+        },
+        {
+          "path": "artifacts/05_full_text_rag_index/01_chunks/chunks.jsonl",
+          "min_bytes": 1000,
+          "required_markers": [
+            "chunk_uid",
+            "structure_aware_1000_150"
+          ]
+        },
+        {
+          "path": "artifacts/05_full_text_rag_index/01_chunks/chunk_manifest.csv",
+          "min_bytes": 1000,
+          "required_markers": [
+            "chunk_uid,paper_id,pmid,pmcid,doi,title,source_format,source_path,normalized_path,chunk_id,chunk_index,section_index,section_title,char_count,chunk_policy,embedding_model,embedding_status"
+          ]
+        },
+        {
+          "path": "artifacts/05_full_text_rag_index/01_chunks/paper_manifest.csv",
+          "min_bytes": 150,
+          "required_markers": [
+            "paper_id,pmid,pmcid,doi,title,source_format,normalized_path,chunk_count,total_chunk_chars"
+          ]
+        },
+        {
+          "path": "artifacts/05_full_text_rag_index/02_lexical/bm25_summary.json",
+          "min_bytes": 150,
+          "required_markers": [
+            "\"status\": \"complete\"",
+            "\"chunk_count\""
+          ]
+        },
+        {
+          "path": "artifacts/05_full_text_rag_index/02_lexical/bm25.pkl",
+          "min_bytes": 1000,
+          "binary": true,
+          "required_markers": []
+        },
+        {
+          "path": "artifacts/05_full_text_rag_index/03_vector/vector_index_summary.json",
+          "min_bytes": 150,
+          "required_markers": [
+            "\"embedding_model\": \"text-embedding-3-small\"",
+            "\"status\""
+          ]
+        },
+        {
+          "path": "artifacts/05_full_text_rag_index/04_hybrid/retrieval_config.json",
+          "min_bytes": 300,
+          "required_markers": [
+            "\"hybrid_fusion\": \"reciprocal_rank_fusion\"",
+            "\"rewrite_uses_paper_packets_not_isolated_chunks\": true"
+          ]
+        },
+        {
+          "path": "artifacts/05_full_text_rag_index/05_outputs/rag_index_summary.md",
+          "min_bytes": 300,
+          "required_markers": [
+            "# Full-Text RAG Index Summary",
+            "## Counts",
+            "## Indexes"
+          ]
+        }
+      ],
+      "allowed_paths": [
+        "original_user_prompt.md",
+        "logs/agent_screen_log.md",
+        "inputs/structured_instruction.md",
+        "inputs/run_config.md",
+        "inputs/intake_self_check.md",
+        "drafts/initial_review.md",
+        "artifacts/README.md",
+        "artifacts/00_workflow_control/README.md",
+        "artifacts/00_workflow_control/01_state/workflow_state.sqlite",
+        "artifacts/00_workflow_control/02_snapshots/workflow_state_snapshot.json",
+        "artifacts/01_draft_validation/README.md",
+        "artifacts/01_draft_validation/01_checks/draft_instruction_check.md",
+        "artifacts/02_subsection_retrieval/README.md",
+        "artifacts/02_subsection_retrieval/01_scope/subsection_manifest.csv",
+        "artifacts/02_subsection_retrieval/02_queries/controller_policy.md",
+        "artifacts/02_subsection_retrieval/02_queries/abstract_review_rule.md",
+        "artifacts/02_subsection_retrieval/02_queries/query_plan.csv",
+        "artifacts/02_subsection_retrieval/02_queries/query_diagnostics.csv",
+        "artifacts/02_subsection_retrieval/02_queries/search_iteration_log.csv",
+        "artifacts/02_subsection_retrieval/02_queries/query_execution_report.md",
+        "artifacts/02_subsection_retrieval/03_pubmed/pubmed_records.jsonl",
+        "artifacts/02_subsection_retrieval/03_pubmed/pubmed_record_index.csv",
+        "artifacts/02_subsection_retrieval/04_screening/abstract_triage_first_pass.csv",
+        "artifacts/02_subsection_retrieval/04_screening/abstract_triage_rescue_pass.csv",
+        "artifacts/02_subsection_retrieval/05_recall/draft_citation_recall_check.csv",
+        "artifacts/02_subsection_retrieval/06_outputs/subsection_metrics.csv",
+        "artifacts/02_subsection_retrieval/06_outputs/final_literature_sets.csv",
+        "artifacts/02_subsection_retrieval/06_outputs/full_text_download_queue.csv",
+        "artifacts/02_subsection_retrieval/06_outputs/subsection_retrieval_check.md",
+        "artifacts/03_semantic_abstract_review/README.md",
+        "artifacts/03_semantic_abstract_review/01_setup/reviewer_instructions.md",
+        "artifacts/03_semantic_abstract_review/01_setup/batch_manifest.csv",
+        "artifacts/03_semantic_abstract_review/01_setup/abstract_review_status.csv",
+        "artifacts/03_semantic_abstract_review/01_setup/semantic_abstract_review_setup_check.md",
+        "artifacts/03_semantic_abstract_review/05_outputs/semantic_abstract_review_merge_report.md",
+        "artifacts/04_primary_full_text_ingestion/README.md",
+        "artifacts/04_primary_full_text_ingestion/01_targets/primary_fulltext_targets.csv",
+        "artifacts/04_primary_full_text_ingestion/02_discovery/fulltext_source_candidates.csv",
+        "artifacts/04_primary_full_text_ingestion/05_user_pdf_request/manual_pdf_queue.csv",
+        "artifacts/04_primary_full_text_ingestion/05_user_pdf_request/user_pdf_pause.md",
+        "artifacts/04_primary_full_text_ingestion/06_outputs/import_status.csv",
+        "artifacts/04_primary_full_text_ingestion/06_outputs/pdf_parse_report.csv",
+        "artifacts/04_primary_full_text_ingestion/06_outputs/narrative_qc_report.csv",
+        "artifacts/04_primary_full_text_ingestion/06_outputs/ingestion_summary.md",
+        "artifacts/05_full_text_rag_index/README.md",
+        "artifacts/05_full_text_rag_index/01_chunks/chunks.jsonl",
+        "artifacts/05_full_text_rag_index/01_chunks/chunk_manifest.csv",
+        "artifacts/05_full_text_rag_index/01_chunks/paper_manifest.csv",
+        "artifacts/05_full_text_rag_index/02_lexical/bm25_summary.json",
+        "artifacts/05_full_text_rag_index/02_lexical/bm25.pkl",
+        "artifacts/05_full_text_rag_index/03_vector/vector_index_summary.json",
+        "artifacts/05_full_text_rag_index/04_hybrid/retrieval_config.json",
+        "artifacts/05_full_text_rag_index/05_outputs/rag_index_summary.md"
+      ],
+      "allowed_path_prefixes": [
+        "artifacts/03_semantic_abstract_review/03_batches",
+        "artifacts/03_semantic_abstract_review/02_context",
+        "artifacts/03_semantic_abstract_review/04_reviewed_batches",
+        "artifacts/04_primary_full_text_ingestion/03_pmc/01_raw_xml",
+        "artifacts/04_primary_full_text_ingestion/03_pmc/02_normalized",
+        "artifacts/04_primary_full_text_ingestion/04_pdf/01_staged",
+        "artifacts/04_primary_full_text_ingestion/04_pdf/02_parser_cache",
+        "artifacts/04_primary_full_text_ingestion/04_pdf/03_normalized",
+        "artifacts/04_primary_full_text_ingestion/05_user_pdf_request/01_user_pdf_dropbox",
+        "artifacts/05_full_text_rag_index/03_vector/01_qdrant",
+        "artifacts/05_full_text_rag_index/03_vector/02_embedding_cache"
+      ],
+      "disallowed_path_patterns": [
+        "artifacts/06_",
+        "artifacts/evidence_packets/",
+        "artifacts/rewritten",
+        "claim_manifest",
+        "evidence_packet",
+        "rewritten_sections",
+        "final_review",
+        ".docx",
+        ".pptx"
+      ]
+    },
+    "subsection_rag_retrieval": {
+      "description": "Validate Stage 7 subsection-level hybrid RAG retrieval and paper-packet construction.",
+      "required_files": [
+        {
+          "path": "logs/agent_screen_log.md",
+          "min_bytes": 80,
+          "required_markers": [
+            "# Agent Screen Log",
+            "## "
+          ]
+        },
+        {
+          "path": "artifacts/00_workflow_control/01_state/workflow_state.sqlite",
+          "min_bytes": 1000,
+          "binary": true,
+          "required_markers": []
+        },
+        {
+          "path": "artifacts/06_subsection_rag_retrieval/README.md",
+          "min_bytes": 300,
+          "required_markers": [
+            "# Subsection RAG Retrieval Artifacts",
+            "paper-level",
+            "04_paper_packets"
+          ]
+        },
+        {
+          "path": "artifacts/06_subsection_rag_retrieval/01_queries/subsection_rag_queries.csv",
+          "min_bytes": 150,
+          "required_markers": [
+            "subsection_id,chapter_title,subsection_title,query_source,query_text,embedding_model,lexical_limit,semantic_limit"
+          ]
+        },
+        {
+          "path": "artifacts/06_subsection_rag_retrieval/02_chunk_hits/subsection_chunk_hits.csv",
+          "min_bytes": 1000,
+          "required_markers": [
+            "subsection_id,chunk_uid,paper_id,pmid,title,section_title,bm25_rank,bm25_score,semantic_rank,semantic_score,rrf_score,selected_for_packet,chunk_text_preview"
+          ]
+        },
+        {
+          "path": "artifacts/06_subsection_rag_retrieval/03_paper_ranking/subsection_paper_rankings.csv",
+          "min_bytes": 1000,
+          "required_markers": [
+            "subsection_id,paper_rank,paper_id,pmid,pmcid,doi,title,source_format,hybrid_score,lexical_score,semantic_score,evidence_role_hint,selected_for_packet,selection_reason,top_chunk_uids"
+          ]
+        },
+        {
+          "path": "artifacts/06_subsection_rag_retrieval/05_outputs/subsection_rag_retrieval_summary.md",
+          "min_bytes": 300,
+          "required_markers": [
+            "# Subsection RAG Retrieval Summary",
+            "## Counts",
+            "## Retrieval Method",
+            "## Downstream Use"
+          ]
+        }
+      ],
+      "allowed_paths": [
+        "original_user_prompt.md",
+        "logs/agent_screen_log.md",
+        "inputs/structured_instruction.md",
+        "inputs/run_config.md",
+        "inputs/intake_self_check.md",
+        "drafts/initial_review.md",
+        "artifacts/README.md",
+        "artifacts/00_workflow_control/README.md",
+        "artifacts/00_workflow_control/01_state/workflow_state.sqlite",
+        "artifacts/00_workflow_control/02_snapshots/workflow_state_snapshot.json",
+        "artifacts/01_draft_validation/README.md",
+        "artifacts/01_draft_validation/01_checks/draft_instruction_check.md",
+        "artifacts/02_subsection_retrieval/README.md",
+        "artifacts/02_subsection_retrieval/01_scope/subsection_manifest.csv",
+        "artifacts/02_subsection_retrieval/02_queries/controller_policy.md",
+        "artifacts/02_subsection_retrieval/02_queries/abstract_review_rule.md",
+        "artifacts/02_subsection_retrieval/02_queries/query_plan.csv",
+        "artifacts/02_subsection_retrieval/02_queries/query_diagnostics.csv",
+        "artifacts/02_subsection_retrieval/02_queries/search_iteration_log.csv",
+        "artifacts/02_subsection_retrieval/02_queries/query_execution_report.md",
+        "artifacts/02_subsection_retrieval/03_pubmed/pubmed_records.jsonl",
+        "artifacts/02_subsection_retrieval/03_pubmed/pubmed_record_index.csv",
+        "artifacts/02_subsection_retrieval/04_screening/abstract_triage_first_pass.csv",
+        "artifacts/02_subsection_retrieval/04_screening/abstract_triage_rescue_pass.csv",
+        "artifacts/02_subsection_retrieval/05_recall/draft_citation_recall_check.csv",
+        "artifacts/02_subsection_retrieval/06_outputs/subsection_metrics.csv",
+        "artifacts/02_subsection_retrieval/06_outputs/final_literature_sets.csv",
+        "artifacts/02_subsection_retrieval/06_outputs/full_text_download_queue.csv",
+        "artifacts/02_subsection_retrieval/06_outputs/subsection_retrieval_check.md",
+        "artifacts/03_semantic_abstract_review/README.md",
+        "artifacts/03_semantic_abstract_review/01_setup/reviewer_instructions.md",
+        "artifacts/03_semantic_abstract_review/01_setup/batch_manifest.csv",
+        "artifacts/03_semantic_abstract_review/01_setup/abstract_review_status.csv",
+        "artifacts/03_semantic_abstract_review/01_setup/semantic_abstract_review_setup_check.md",
+        "artifacts/03_semantic_abstract_review/05_outputs/semantic_abstract_review_merge_report.md",
+        "artifacts/04_primary_full_text_ingestion/README.md",
+        "artifacts/04_primary_full_text_ingestion/01_targets/primary_fulltext_targets.csv",
+        "artifacts/04_primary_full_text_ingestion/02_discovery/fulltext_source_candidates.csv",
+        "artifacts/04_primary_full_text_ingestion/05_user_pdf_request/manual_pdf_queue.csv",
+        "artifacts/04_primary_full_text_ingestion/05_user_pdf_request/user_pdf_pause.md",
+        "artifacts/04_primary_full_text_ingestion/06_outputs/import_status.csv",
+        "artifacts/04_primary_full_text_ingestion/06_outputs/pdf_parse_report.csv",
+        "artifacts/04_primary_full_text_ingestion/06_outputs/narrative_qc_report.csv",
+        "artifacts/04_primary_full_text_ingestion/06_outputs/ingestion_summary.md",
+        "artifacts/05_full_text_rag_index/README.md",
+        "artifacts/05_full_text_rag_index/01_chunks/chunks.jsonl",
+        "artifacts/05_full_text_rag_index/01_chunks/chunk_manifest.csv",
+        "artifacts/05_full_text_rag_index/01_chunks/paper_manifest.csv",
+        "artifacts/05_full_text_rag_index/02_lexical/bm25_summary.json",
+        "artifacts/05_full_text_rag_index/02_lexical/bm25.pkl",
+        "artifacts/05_full_text_rag_index/03_vector/vector_index_summary.json",
+        "artifacts/05_full_text_rag_index/04_hybrid/retrieval_config.json",
+        "artifacts/05_full_text_rag_index/05_outputs/rag_index_summary.md",
+        "artifacts/06_subsection_rag_retrieval/README.md",
+        "artifacts/06_subsection_rag_retrieval/01_queries/subsection_rag_queries.csv",
+        "artifacts/06_subsection_rag_retrieval/02_chunk_hits/subsection_chunk_hits.csv",
+        "artifacts/06_subsection_rag_retrieval/03_paper_ranking/subsection_paper_rankings.csv",
+        "artifacts/06_subsection_rag_retrieval/05_outputs/subsection_rag_retrieval_summary.md"
+      ],
+      "allowed_path_prefixes": [
+        "artifacts/03_semantic_abstract_review/03_batches",
+        "artifacts/03_semantic_abstract_review/02_context",
+        "artifacts/03_semantic_abstract_review/04_reviewed_batches",
+        "artifacts/04_primary_full_text_ingestion/03_pmc/01_raw_xml",
+        "artifacts/04_primary_full_text_ingestion/03_pmc/02_normalized",
+        "artifacts/04_primary_full_text_ingestion/04_pdf/01_staged",
+        "artifacts/04_primary_full_text_ingestion/04_pdf/02_parser_cache",
+        "artifacts/04_primary_full_text_ingestion/04_pdf/03_normalized",
+        "artifacts/04_primary_full_text_ingestion/05_user_pdf_request/01_user_pdf_dropbox",
+        "artifacts/05_full_text_rag_index/03_vector/01_qdrant",
+        "artifacts/05_full_text_rag_index/03_vector/02_embedding_cache",
+        "artifacts/06_subsection_rag_retrieval/04_paper_packets"
+      ],
+      "disallowed_path_patterns": [
+        "artifacts/07_",
+        "artifacts/rewritten",
+        "claim_manifest",
+        "rewritten_sections",
+        "final_review",
+        ".docx",
+        ".pptx"
+      ]
+    },
+    "subsection_rewrite_setup": {
+      "description": "Validate Stage 8 rewrite work-order preparation before writing agents produce rewritten subsections.",
+      "required_files": [
+        {
+          "path": "logs/agent_screen_log.md",
+          "min_bytes": 80,
+          "required_markers": [
+            "# Agent Screen Log",
+            "## "
+          ]
+        },
+        {
+          "path": "artifacts/00_workflow_control/01_state/workflow_state.sqlite",
+          "min_bytes": 1000,
+          "binary": true,
+          "required_markers": []
+        },
+        {
+          "path": "artifacts/07_subsection_rewrite/README.md",
+          "min_bytes": 300,
+          "required_markers": [
+            "# Subsection Rewrite Artifacts",
+            "work orders",
+            "03_rewritten_subsections"
+          ]
+        },
+        {
+          "path": "artifacts/07_subsection_rewrite/01_inputs/subsection_rewrite_manifest.csv",
+          "min_bytes": 150,
+          "required_markers": [
+            "subsection_id,chapter_title,subsection_title,original_subsection_path,paper_packet_path,work_order_path,rewritten_path,rewrite_status,notes"
+          ]
+        },
+        {
+          "path": "artifacts/07_subsection_rewrite/04_verification/rewrite_instruction_check.csv",
+          "min_bytes": 150,
+          "required_markers": [
+            "subsection_id,rewritten_path,check_status,has_rewritten_text,meets_expansion_floor,has_paper_triage,triages_all_packet_papers,has_citation_register,citation_register_traceable,has_inline_citations,inline_citations_registered,registered_citations_used,acknowledges_full_text_sources,has_structured_evidence_details,allowed_triage_roles,allowed_support_statuses,uses_packet_papers,has_residual_uncertainty,no_new_untraced_citations,notes"
+          ]
+        },
+        {
+          "path": "artifacts/07_subsection_rewrite/05_outputs/subsection_rewrite_summary.md",
+          "min_bytes": 300,
+          "required_markers": [
+            "# Subsection Rewrite Summary",
+            "## Counts",
+            "## Downstream Use"
+          ]
+        }
+      ],
+      "allowed_paths": [
+        "original_user_prompt.md",
+        "logs/agent_screen_log.md",
+        "inputs/structured_instruction.md",
+        "inputs/run_config.md",
+        "inputs/intake_self_check.md",
+        "drafts/initial_review.md",
+        "artifacts/README.md",
+        "artifacts/00_workflow_control/README.md",
+        "artifacts/00_workflow_control/01_state/workflow_state.sqlite",
+        "artifacts/00_workflow_control/02_snapshots/workflow_state_snapshot.json",
+        "artifacts/01_draft_validation/README.md",
+        "artifacts/01_draft_validation/01_checks/draft_instruction_check.md",
+        "artifacts/02_subsection_retrieval/README.md",
+        "artifacts/02_subsection_retrieval/01_scope/subsection_manifest.csv",
+        "artifacts/02_subsection_retrieval/02_queries/controller_policy.md",
+        "artifacts/02_subsection_retrieval/02_queries/abstract_review_rule.md",
+        "artifacts/02_subsection_retrieval/02_queries/query_plan.csv",
+        "artifacts/02_subsection_retrieval/02_queries/query_diagnostics.csv",
+        "artifacts/02_subsection_retrieval/02_queries/search_iteration_log.csv",
+        "artifacts/02_subsection_retrieval/02_queries/query_execution_report.md",
+        "artifacts/02_subsection_retrieval/03_pubmed/pubmed_records.jsonl",
+        "artifacts/02_subsection_retrieval/03_pubmed/pubmed_record_index.csv",
+        "artifacts/02_subsection_retrieval/04_screening/abstract_triage_first_pass.csv",
+        "artifacts/02_subsection_retrieval/04_screening/abstract_triage_rescue_pass.csv",
+        "artifacts/02_subsection_retrieval/05_recall/draft_citation_recall_check.csv",
+        "artifacts/02_subsection_retrieval/06_outputs/subsection_metrics.csv",
+        "artifacts/02_subsection_retrieval/06_outputs/final_literature_sets.csv",
+        "artifacts/02_subsection_retrieval/06_outputs/full_text_download_queue.csv",
+        "artifacts/02_subsection_retrieval/06_outputs/subsection_retrieval_check.md",
+        "artifacts/03_semantic_abstract_review/README.md",
+        "artifacts/03_semantic_abstract_review/01_setup/reviewer_instructions.md",
+        "artifacts/03_semantic_abstract_review/01_setup/batch_manifest.csv",
+        "artifacts/03_semantic_abstract_review/01_setup/abstract_review_status.csv",
+        "artifacts/03_semantic_abstract_review/01_setup/semantic_abstract_review_setup_check.md",
+        "artifacts/03_semantic_abstract_review/05_outputs/semantic_abstract_review_merge_report.md",
+        "artifacts/04_primary_full_text_ingestion/README.md",
+        "artifacts/04_primary_full_text_ingestion/01_targets/primary_fulltext_targets.csv",
+        "artifacts/04_primary_full_text_ingestion/02_discovery/fulltext_source_candidates.csv",
+        "artifacts/04_primary_full_text_ingestion/05_user_pdf_request/manual_pdf_queue.csv",
+        "artifacts/04_primary_full_text_ingestion/05_user_pdf_request/user_pdf_pause.md",
+        "artifacts/04_primary_full_text_ingestion/06_outputs/import_status.csv",
+        "artifacts/04_primary_full_text_ingestion/06_outputs/pdf_parse_report.csv",
+        "artifacts/04_primary_full_text_ingestion/06_outputs/narrative_qc_report.csv",
+        "artifacts/04_primary_full_text_ingestion/06_outputs/ingestion_summary.md",
+        "artifacts/05_full_text_rag_index/README.md",
+        "artifacts/05_full_text_rag_index/01_chunks/chunks.jsonl",
+        "artifacts/05_full_text_rag_index/01_chunks/chunk_manifest.csv",
+        "artifacts/05_full_text_rag_index/01_chunks/paper_manifest.csv",
+        "artifacts/05_full_text_rag_index/02_lexical/bm25_summary.json",
+        "artifacts/05_full_text_rag_index/02_lexical/bm25.pkl",
+        "artifacts/05_full_text_rag_index/03_vector/vector_index_summary.json",
+        "artifacts/05_full_text_rag_index/04_hybrid/retrieval_config.json",
+        "artifacts/05_full_text_rag_index/05_outputs/rag_index_summary.md",
+        "artifacts/06_subsection_rag_retrieval/README.md",
+        "artifacts/06_subsection_rag_retrieval/01_queries/subsection_rag_queries.csv",
+        "artifacts/06_subsection_rag_retrieval/02_chunk_hits/subsection_chunk_hits.csv",
+        "artifacts/06_subsection_rag_retrieval/03_paper_ranking/subsection_paper_rankings.csv",
+        "artifacts/06_subsection_rag_retrieval/05_outputs/subsection_rag_retrieval_summary.md",
+        "artifacts/07_subsection_rewrite/README.md",
+        "artifacts/07_subsection_rewrite/01_inputs/subsection_rewrite_manifest.csv",
+        "artifacts/07_subsection_rewrite/04_verification/rewrite_instruction_check.csv",
+        "artifacts/07_subsection_rewrite/05_outputs/subsection_rewrite_summary.md"
+      ],
+      "allowed_path_prefixes": [
+        "artifacts/03_semantic_abstract_review/03_batches",
+        "artifacts/03_semantic_abstract_review/02_context",
+        "artifacts/03_semantic_abstract_review/04_reviewed_batches",
+        "artifacts/04_primary_full_text_ingestion/03_pmc/01_raw_xml",
+        "artifacts/04_primary_full_text_ingestion/03_pmc/02_normalized",
+        "artifacts/04_primary_full_text_ingestion/04_pdf/01_staged",
+        "artifacts/04_primary_full_text_ingestion/04_pdf/02_parser_cache",
+        "artifacts/04_primary_full_text_ingestion/04_pdf/03_normalized",
+        "artifacts/04_primary_full_text_ingestion/05_user_pdf_request/01_user_pdf_dropbox",
+        "artifacts/05_full_text_rag_index/03_vector/01_qdrant",
+        "artifacts/05_full_text_rag_index/03_vector/02_embedding_cache",
+        "artifacts/06_subsection_rag_retrieval/04_paper_packets",
+        "artifacts/07_subsection_rewrite/01_inputs",
+        "artifacts/07_subsection_rewrite/02_work_orders"
+      ],
+      "disallowed_path_patterns": [
+        "artifacts/07_subsection_rewrite/03_rewritten_subsections/SUB",
+        "artifacts/verification/",
+        "artifacts/08_",
+        "claim_manifest",
+        "claim_verification",
+        "final_review",
+        ".docx",
+        ".pptx"
+      ]
+    },
+    "subsection_rewrite": {
+      "description": "Validate Stage 8 evidence-grounded subsection rewriting from Stage 7 paper packets.",
+      "required_files": [
+        {
+          "path": "logs/agent_screen_log.md",
+          "min_bytes": 80,
+          "required_markers": [
+            "# Agent Screen Log",
+            "## "
+          ]
+        },
+        {
+          "path": "artifacts/00_workflow_control/01_state/workflow_state.sqlite",
+          "min_bytes": 1000,
+          "binary": true,
+          "required_markers": []
+        },
+        {
+          "path": "artifacts/07_subsection_rewrite/README.md",
+          "min_bytes": 300,
+          "required_markers": [
+            "# Subsection Rewrite Artifacts",
+            "work orders",
+            "03_rewritten_subsections"
+          ]
+        },
+        {
+          "path": "artifacts/07_subsection_rewrite/01_inputs/subsection_rewrite_manifest.csv",
+          "min_bytes": 150,
+          "required_markers": [
+            "subsection_id,chapter_title,subsection_title,original_subsection_path,paper_packet_path,work_order_path,rewritten_path,rewrite_status,notes"
+          ]
+        },
+        {
+          "path": "artifacts/07_subsection_rewrite/04_verification/rewrite_instruction_check.csv",
+          "min_bytes": 150,
+          "required_markers": [
+            "subsection_id,rewritten_path,check_status,has_rewritten_text,meets_expansion_floor,has_paper_triage,triages_all_packet_papers,has_citation_register,citation_register_traceable,has_inline_citations,inline_citations_registered,registered_citations_used,acknowledges_full_text_sources,has_structured_evidence_details,allowed_triage_roles,allowed_support_statuses,uses_packet_papers,has_residual_uncertainty,no_new_untraced_citations,notes"
+          ]
+        },
+        {
+          "path": "artifacts/07_subsection_rewrite/05_outputs/subsection_rewrite_summary.md",
+          "min_bytes": 300,
+          "required_markers": [
+            "# Subsection Rewrite Summary",
+            "## Counts",
+            "## Downstream Use"
+          ]
+        }
+      ],
+      "allowed_paths": [
+        "original_user_prompt.md",
+        "logs/agent_screen_log.md",
+        "inputs/structured_instruction.md",
+        "inputs/run_config.md",
+        "inputs/intake_self_check.md",
+        "drafts/initial_review.md",
+        "artifacts/README.md",
+        "artifacts/00_workflow_control/README.md",
+        "artifacts/00_workflow_control/01_state/workflow_state.sqlite",
+        "artifacts/00_workflow_control/02_snapshots/workflow_state_snapshot.json",
+        "artifacts/01_draft_validation/README.md",
+        "artifacts/01_draft_validation/01_checks/draft_instruction_check.md",
+        "artifacts/02_subsection_retrieval/README.md",
+        "artifacts/02_subsection_retrieval/01_scope/subsection_manifest.csv",
+        "artifacts/02_subsection_retrieval/02_queries/controller_policy.md",
+        "artifacts/02_subsection_retrieval/02_queries/abstract_review_rule.md",
+        "artifacts/02_subsection_retrieval/02_queries/query_plan.csv",
+        "artifacts/02_subsection_retrieval/02_queries/query_diagnostics.csv",
+        "artifacts/02_subsection_retrieval/02_queries/search_iteration_log.csv",
+        "artifacts/02_subsection_retrieval/02_queries/query_execution_report.md",
+        "artifacts/02_subsection_retrieval/03_pubmed/pubmed_records.jsonl",
+        "artifacts/02_subsection_retrieval/03_pubmed/pubmed_record_index.csv",
+        "artifacts/02_subsection_retrieval/04_screening/abstract_triage_first_pass.csv",
+        "artifacts/02_subsection_retrieval/04_screening/abstract_triage_rescue_pass.csv",
+        "artifacts/02_subsection_retrieval/05_recall/draft_citation_recall_check.csv",
+        "artifacts/02_subsection_retrieval/06_outputs/subsection_metrics.csv",
+        "artifacts/02_subsection_retrieval/06_outputs/final_literature_sets.csv",
+        "artifacts/02_subsection_retrieval/06_outputs/full_text_download_queue.csv",
+        "artifacts/02_subsection_retrieval/06_outputs/subsection_retrieval_check.md",
+        "artifacts/03_semantic_abstract_review/README.md",
+        "artifacts/03_semantic_abstract_review/01_setup/reviewer_instructions.md",
+        "artifacts/03_semantic_abstract_review/01_setup/batch_manifest.csv",
+        "artifacts/03_semantic_abstract_review/01_setup/abstract_review_status.csv",
+        "artifacts/03_semantic_abstract_review/01_setup/semantic_abstract_review_setup_check.md",
+        "artifacts/03_semantic_abstract_review/05_outputs/semantic_abstract_review_merge_report.md",
+        "artifacts/04_primary_full_text_ingestion/README.md",
+        "artifacts/04_primary_full_text_ingestion/01_targets/primary_fulltext_targets.csv",
+        "artifacts/04_primary_full_text_ingestion/02_discovery/fulltext_source_candidates.csv",
+        "artifacts/04_primary_full_text_ingestion/05_user_pdf_request/manual_pdf_queue.csv",
+        "artifacts/04_primary_full_text_ingestion/05_user_pdf_request/user_pdf_pause.md",
+        "artifacts/04_primary_full_text_ingestion/06_outputs/import_status.csv",
+        "artifacts/04_primary_full_text_ingestion/06_outputs/pdf_parse_report.csv",
+        "artifacts/04_primary_full_text_ingestion/06_outputs/narrative_qc_report.csv",
+        "artifacts/04_primary_full_text_ingestion/06_outputs/ingestion_summary.md",
+        "artifacts/05_full_text_rag_index/README.md",
+        "artifacts/05_full_text_rag_index/01_chunks/chunks.jsonl",
+        "artifacts/05_full_text_rag_index/01_chunks/chunk_manifest.csv",
+        "artifacts/05_full_text_rag_index/01_chunks/paper_manifest.csv",
+        "artifacts/05_full_text_rag_index/02_lexical/bm25_summary.json",
+        "artifacts/05_full_text_rag_index/02_lexical/bm25.pkl",
+        "artifacts/05_full_text_rag_index/03_vector/vector_index_summary.json",
+        "artifacts/05_full_text_rag_index/04_hybrid/retrieval_config.json",
+        "artifacts/05_full_text_rag_index/05_outputs/rag_index_summary.md",
+        "artifacts/06_subsection_rag_retrieval/README.md",
+        "artifacts/06_subsection_rag_retrieval/01_queries/subsection_rag_queries.csv",
+        "artifacts/06_subsection_rag_retrieval/02_chunk_hits/subsection_chunk_hits.csv",
+        "artifacts/06_subsection_rag_retrieval/03_paper_ranking/subsection_paper_rankings.csv",
+        "artifacts/06_subsection_rag_retrieval/05_outputs/subsection_rag_retrieval_summary.md",
+        "artifacts/07_subsection_rewrite/README.md",
+        "artifacts/07_subsection_rewrite/01_inputs/subsection_rewrite_manifest.csv",
+        "artifacts/07_subsection_rewrite/04_verification/rewrite_instruction_check.csv",
+        "artifacts/07_subsection_rewrite/05_outputs/subsection_rewrite_summary.md"
+      ],
+      "allowed_path_prefixes": [
+        "artifacts/03_semantic_abstract_review/03_batches",
+        "artifacts/03_semantic_abstract_review/02_context",
+        "artifacts/03_semantic_abstract_review/04_reviewed_batches",
+        "artifacts/04_primary_full_text_ingestion/03_pmc/01_raw_xml",
+        "artifacts/04_primary_full_text_ingestion/03_pmc/02_normalized",
+        "artifacts/04_primary_full_text_ingestion/04_pdf/01_staged",
+        "artifacts/04_primary_full_text_ingestion/04_pdf/02_parser_cache",
+        "artifacts/04_primary_full_text_ingestion/04_pdf/03_normalized",
+        "artifacts/04_primary_full_text_ingestion/05_user_pdf_request/01_user_pdf_dropbox",
+        "artifacts/05_full_text_rag_index/03_vector/01_qdrant",
+        "artifacts/05_full_text_rag_index/03_vector/02_embedding_cache",
+        "artifacts/06_subsection_rag_retrieval/04_paper_packets",
+        "artifacts/07_subsection_rewrite/01_inputs",
+        "artifacts/07_subsection_rewrite/02_work_orders",
+        "artifacts/07_subsection_rewrite/03_rewritten_subsections"
+      ],
+      "disallowed_path_patterns": [
+        "artifacts/verification/",
+        "artifacts/08_",
+        "claim_manifest",
+        "claim_verification",
+        "final_review",
+        ".docx",
+        ".pptx"
+      ]
+    },
+    "terminology_normalization": {
+      "description": "Validate Stage 9 entity synonym and terminology normalization before review assembly.",
+      "required_files": [
+        {
+          "path": "logs/agent_screen_log.md",
+          "min_bytes": 80,
+          "required_markers": [
+            "# Agent Screen Log",
+            "## "
+          ]
+        },
+        {
+          "path": "artifacts/00_workflow_control/01_state/workflow_state.sqlite",
+          "min_bytes": 1000,
+          "binary": true,
+          "required_markers": []
+        },
+        {
+          "path": "artifacts/08_terminology_normalization/README.md",
+          "min_bytes": 300,
+          "required_markers": [
+            "# Terminology Normalization Artifacts",
+            "normalized copies",
+            "03_normalized_subsections"
+          ]
+        },
+        {
+          "path": "artifacts/08_terminology_normalization/02_glossary/terminology_glossary.csv",
+          "min_bytes": 100,
+          "required_markers": [
+            "entity_id,preferred_name,entity_type,aliases,first_mention_rule,normalization_status,notes"
+          ]
+        },
+        {
+          "path": "artifacts/08_terminology_normalization/04_verification/terminology_normalization_check.csv",
+          "min_bytes": 150,
+          "required_markers": [
+            "subsection_id,normalized_path,check_status,has_text,applies_known_aliases,preserves_citation_ids,notes"
+          ]
+        },
+        {
+          "path": "artifacts/08_terminology_normalization/05_outputs/terminology_normalization_summary.md",
+          "min_bytes": 300,
+          "required_markers": [
+            "# Terminology Normalization Summary",
+            "## Counts",
+            "## Downstream Use"
+          ]
+        }
+      ],
+      "allowed_paths": [
+        "original_user_prompt.md",
+        "logs/agent_screen_log.md",
+        "inputs/structured_instruction.md",
+        "inputs/run_config.md",
+        "inputs/intake_self_check.md",
+        "inputs/terminology_alias_overrides.csv",
+        "drafts/initial_review.md",
+        "artifacts/README.md",
+        "artifacts/08_terminology_normalization/README.md",
+        "artifacts/08_terminology_normalization/02_glossary/terminology_glossary.csv",
+        "artifacts/08_terminology_normalization/04_verification/terminology_normalization_check.csv",
+        "artifacts/08_terminology_normalization/05_outputs/terminology_normalization_summary.md"
+      ],
+      "allowed_path_prefixes": [
+        "artifacts/00_workflow_control",
+        "artifacts/01_draft_validation",
+        "artifacts/02_subsection_retrieval",
+        "artifacts/03_semantic_abstract_review",
+        "artifacts/04_primary_full_text_ingestion",
+        "artifacts/05_full_text_rag_index",
+        "artifacts/06_subsection_rag_retrieval",
+        "artifacts/07_subsection_rewrite",
+        "artifacts/08_terminology_normalization/01_inputs",
+        "artifacts/08_terminology_normalization/03_normalized_subsections"
+      ],
+      "disallowed_path_patterns": [
+        "artifacts/verification/",
+        "artifacts/09_",
+        "claim_manifest",
+        "claim_verification",
+        "final_review",
+        ".docx",
+        ".pptx"
+      ]
+    },
+    "review_assembly": {
+      "description": "Validate Stage 10 assembly of terminology-normalized subsection rewrites into one review draft.",
+      "required_files": [
+        {
+          "path": "logs/agent_screen_log.md",
+          "min_bytes": 80,
+          "required_markers": [
+            "# Agent Screen Log",
+            "## "
+          ]
+        },
+        {
+          "path": "artifacts/00_workflow_control/01_state/workflow_state.sqlite",
+          "min_bytes": 1000,
+          "binary": true,
+          "required_markers": []
+        },
+        {
+          "path": "drafts/assembled_review.md",
+          "min_bytes": 1000,
+          "required_markers": [
+            "# Assembled Review Draft",
+            "source_subsection_id",
+            "#### Citation Register",
+            "#### Residual Uncertainty"
+          ]
+        },
+        {
+          "path": "artifacts/09_review_assembly/README.md",
+          "min_bytes": 300,
+          "required_markers": [
+            "# Review Assembly Artifacts",
+            "drafts/assembled_review.md"
+          ]
+        },
+        {
+          "path": "artifacts/09_review_assembly/01_inputs/review_assembly_manifest.csv",
+          "min_bytes": 150,
+          "required_markers": [
+            "subsection_id,chapter_title,subsection_title,normalized_path,assembled_section_path,citation_count,assembly_status,notes"
+          ]
+        },
+        {
+          "path": "artifacts/09_review_assembly/03_verification/review_assembly_check.csv",
+          "min_bytes": 100,
+          "required_markers": [
+            "check_name,check_status,observed_value,notes"
+          ]
+        },
+        {
+          "path": "artifacts/09_review_assembly/04_outputs/review_assembly_summary.md",
+          "min_bytes": 300,
+          "required_markers": [
+            "# Review Assembly Summary",
+            "## Counts",
+            "## Downstream Use"
+          ]
+        }
+      ],
+      "allowed_paths": [
+        "original_user_prompt.md",
+        "logs/agent_screen_log.md",
+        "inputs/structured_instruction.md",
+        "inputs/run_config.md",
+        "inputs/intake_self_check.md",
+        "inputs/terminology_alias_overrides.csv",
+        "drafts/initial_review.md",
+        "drafts/assembled_review.md",
+        "artifacts/README.md",
+        "artifacts/09_review_assembly/README.md",
+        "artifacts/09_review_assembly/01_inputs/review_assembly_manifest.csv",
+        "artifacts/09_review_assembly/03_verification/review_assembly_check.csv",
+        "artifacts/09_review_assembly/04_outputs/review_assembly_summary.md"
+      ],
+      "allowed_path_prefixes": [
+        "artifacts/00_workflow_control",
+        "artifacts/01_draft_validation",
+        "artifacts/02_subsection_retrieval",
+        "artifacts/03_semantic_abstract_review",
+        "artifacts/04_primary_full_text_ingestion",
+        "artifacts/05_full_text_rag_index",
+        "artifacts/06_subsection_rag_retrieval",
+        "artifacts/07_subsection_rewrite",
+        "artifacts/08_terminology_normalization",
+        "artifacts/09_review_assembly/02_sections"
+      ],
+      "disallowed_path_patterns": [
+        "artifacts/verification/",
+        "artifacts/10_",
+        "claim_manifest",
+        "claim_verification",
+        "final_review",
+        ".docx",
+        ".pptx"
+      ]
+    },
+    "claim_verification_setup": {
+      "description": "Validate Stage 11 claim-verification setup before reviewer agents write decisions.",
+      "required_files": [
+        {
+          "path": "logs/agent_screen_log.md",
+          "min_bytes": 80,
+          "required_markers": [
+            "# Agent Screen Log",
+            "## "
+          ]
+        },
+        {
+          "path": "artifacts/00_workflow_control/01_state/workflow_state.sqlite",
+          "min_bytes": 1000,
+          "binary": true,
+          "required_markers": []
+        },
+        {
+          "path": "artifacts/10_claim_verification/README.md",
+          "min_bytes": 300,
+          "required_markers": [
+            "# Claim Verification Artifacts",
+            "02_work_orders",
+            "03_claim_reviews"
+          ]
+        },
+        {
+          "path": "artifacts/10_claim_verification/01_inputs/claim_manifest.csv",
+          "min_bytes": 300,
+          "required_markers": [
+            "claim_id,subsection_id,chapter_title,subsection_title,claim_text,cited_paper_ids,citation_ids,work_order_path,review_path,verification_status,notes"
+          ]
+        },
+        {
+          "path": "artifacts/10_claim_verification/04_verification/claim_verification_setup_check.csv",
+          "min_bytes": 100,
+          "required_markers": [
+            "check_name,check_status,observed_value,notes"
+          ]
+        },
+        {
+          "path": "artifacts/10_claim_verification/05_outputs/claim_verification_summary.md",
+          "min_bytes": 300,
+          "required_markers": [
+            "# Claim Verification Summary",
+            "## Counts",
+            "## Downstream Use"
+          ]
+        }
+      ],
+      "allowed_paths": [
+        "original_user_prompt.md",
+        "logs/agent_screen_log.md",
+        "inputs/structured_instruction.md",
+        "inputs/run_config.md",
+        "inputs/intake_self_check.md",
+        "inputs/terminology_alias_overrides.csv",
+        "drafts/initial_review.md",
+        "drafts/assembled_review.md",
+        "artifacts/README.md",
+        "artifacts/10_claim_verification/README.md",
+        "artifacts/10_claim_verification/01_inputs/claim_manifest.csv",
+        "artifacts/10_claim_verification/04_verification/claim_verification_setup_check.csv",
+        "artifacts/10_claim_verification/05_outputs/claim_verification_summary.md"
+      ],
+      "allowed_path_prefixes": [
+        "artifacts/00_workflow_control",
+        "artifacts/01_draft_validation",
+        "artifacts/02_subsection_retrieval",
+        "artifacts/03_semantic_abstract_review",
+        "artifacts/04_primary_full_text_ingestion",
+        "artifacts/05_full_text_rag_index",
+        "artifacts/06_subsection_rag_retrieval",
+        "artifacts/07_subsection_rewrite",
+        "artifacts/08_terminology_normalization",
+        "artifacts/09_review_assembly",
+        "artifacts/10_claim_verification/02_work_orders"
+      ],
+      "disallowed_path_patterns": [
+        "artifacts/10_claim_verification/03_claim_reviews/SUB",
+        "artifacts/10_claim_verification/04_verification/claim_verification_check.csv",
+        "artifacts/11_",
+        "final_review",
+        ".docx",
+        ".pptx"
+      ]
+    },
+    "claim_verification": {
+      "description": "Validate completed Stage 11 claim-level verification decisions.",
+      "required_files": [
+        {
+          "path": "logs/agent_screen_log.md",
+          "min_bytes": 80,
+          "required_markers": [
+            "# Agent Screen Log",
+            "## "
+          ]
+        },
+        {
+          "path": "artifacts/00_workflow_control/01_state/workflow_state.sqlite",
+          "min_bytes": 1000,
+          "binary": true,
+          "required_markers": []
+        },
+        {
+          "path": "artifacts/10_claim_verification/README.md",
+          "min_bytes": 300,
+          "required_markers": [
+            "# Claim Verification Artifacts",
+            "02_work_orders",
+            "03_claim_reviews"
+          ]
+        },
+        {
+          "path": "artifacts/10_claim_verification/01_inputs/claim_manifest.csv",
+          "min_bytes": 300,
+          "required_markers": [
+            "claim_id,subsection_id,chapter_title,subsection_title,claim_text,cited_paper_ids,citation_ids,work_order_path,review_path,verification_status,notes"
+          ]
+        },
+        {
+          "path": "artifacts/10_claim_verification/04_verification/claim_verification_check.csv",
+          "min_bytes": 100,
+          "required_markers": [
+            "check_name,check_status,observed_value,notes"
+          ]
+        },
+        {
+          "path": "artifacts/10_claim_verification/05_outputs/claim_verification_summary.md",
+          "min_bytes": 300,
+          "required_markers": [
+            "# Claim Verification Summary",
+            "## Verification Status Counts",
+            "## Downstream Use"
+          ]
+        }
+      ],
+      "allowed_paths": [
+        "original_user_prompt.md",
+        "logs/agent_screen_log.md",
+        "inputs/structured_instruction.md",
+        "inputs/run_config.md",
+        "inputs/intake_self_check.md",
+        "inputs/terminology_alias_overrides.csv",
+        "drafts/initial_review.md",
+        "drafts/assembled_review.md",
+        "artifacts/README.md",
+        "artifacts/10_claim_verification/README.md",
+        "artifacts/10_claim_verification/01_inputs/claim_manifest.csv",
+        "artifacts/10_claim_verification/04_verification/claim_verification_setup_check.csv",
+        "artifacts/10_claim_verification/04_verification/claim_verification_check.csv",
+        "artifacts/10_claim_verification/05_outputs/claim_verification_summary.md"
+      ],
+      "allowed_path_prefixes": [
+        "artifacts/00_workflow_control",
+        "artifacts/01_draft_validation",
+        "artifacts/02_subsection_retrieval",
+        "artifacts/03_semantic_abstract_review",
+        "artifacts/04_primary_full_text_ingestion",
+        "artifacts/05_full_text_rag_index",
+        "artifacts/06_subsection_rag_retrieval",
+        "artifacts/07_subsection_rewrite",
+        "artifacts/08_terminology_normalization",
+        "artifacts/09_review_assembly",
+        "artifacts/10_claim_verification/02_work_orders",
+        "artifacts/10_claim_verification/03_claim_reviews"
+      ],
+      "disallowed_path_patterns": [
+        "artifacts/11_",
+        "final_review",
+        ".docx",
+        ".pptx"
+      ]
+    },
+    "corrective_rewrite": {
+      "description": "Validate Stage 12 correction of assembled review claims using completed claim-verification decisions.",
+      "required_files": [
+        {
+          "path": "logs/agent_screen_log.md",
+          "min_bytes": 80,
+          "required_markers": [
+            "# Agent Screen Log",
+            "## "
+          ]
+        },
+        {
+          "path": "artifacts/00_workflow_control/01_state/workflow_state.sqlite",
+          "min_bytes": 1000,
+          "binary": true,
+          "required_markers": []
+        },
+        {
+          "path": "drafts/corrected_review.md",
+          "min_bytes": 1000,
+          "required_markers": [
+            "# Assembled Review Draft",
+            "#### Citation Register"
+          ]
+        },
+        {
+          "path": "artifacts/11_corrective_rewrite/README.md",
+          "min_bytes": 300,
+          "required_markers": [
+            "# Corrective Rewrite Artifacts",
+            "01_inputs",
+            "02_outputs",
+            "03_verification",
+            "04_outputs"
+          ]
+        },
+        {
+          "path": "artifacts/11_corrective_rewrite/01_inputs/correction_manifest.csv",
+          "min_bytes": 100,
+          "required_markers": [
+            "claim_id,subsection_id,verification_status,mismatch_type,original_claim,corrected_claim,final_replacement,cited_paper_ids,citation_ids,action,replacement_status,notes"
+          ]
+        },
+        {
+          "path": "artifacts/11_corrective_rewrite/02_outputs/corrected_review.md",
+          "min_bytes": 1000,
+          "required_markers": [
+            "# Assembled Review Draft",
+            "#### Citation Register"
+          ]
+        },
+        {
+          "path": "artifacts/11_corrective_rewrite/03_verification/corrective_rewrite_check.csv",
+          "min_bytes": 100,
+          "required_markers": [
+            "check_name,check_status,observed_value,notes"
+          ]
+        },
+        {
+          "path": "artifacts/11_corrective_rewrite/04_outputs/corrective_rewrite_summary.md",
+          "min_bytes": 300,
+          "required_markers": [
+            "# Corrective Rewrite Summary",
+            "## Counts",
+            "## Downstream Use"
+          ]
+        }
+      ],
+      "allowed_paths": [
+        "original_user_prompt.md",
+        "logs/agent_screen_log.md",
+        "inputs/structured_instruction.md",
+        "inputs/run_config.md",
+        "inputs/intake_self_check.md",
+        "inputs/terminology_alias_overrides.csv",
+        "drafts/initial_review.md",
+        "drafts/assembled_review.md",
+        "drafts/corrected_review.md",
+        "artifacts/README.md",
+        "artifacts/11_corrective_rewrite/README.md",
+        "artifacts/11_corrective_rewrite/01_inputs/correction_manifest.csv",
+        "artifacts/11_corrective_rewrite/02_outputs/corrected_review.md",
+        "artifacts/11_corrective_rewrite/03_verification/corrective_rewrite_check.csv",
+        "artifacts/11_corrective_rewrite/04_outputs/corrective_rewrite_summary.md"
+      ],
+      "allowed_path_prefixes": [
+        "artifacts/00_workflow_control",
+        "artifacts/01_draft_validation",
+        "artifacts/02_subsection_retrieval",
+        "artifacts/03_semantic_abstract_review",
+        "artifacts/04_primary_full_text_ingestion",
+        "artifacts/05_full_text_rag_index",
+        "artifacts/06_subsection_rag_retrieval",
+        "artifacts/07_subsection_rewrite",
+        "artifacts/08_terminology_normalization",
+        "artifacts/09_review_assembly",
+        "artifacts/10_claim_verification"
+      ],
+      "disallowed_path_patterns": [
+        "artifacts/12_",
+        "final_review",
+        ".docx",
+        ".pptx"
+      ]
+    },
+    "final_review": {
+      "description": "Validate the terminal reader-facing review and deduplicated reference list.",
+      "required_files": [
+        {
+          "path": "logs/agent_screen_log.md",
+          "min_bytes": 80,
+          "required_markers": [
+            "# Agent Screen Log",
+            "## "
+          ]
+        },
+        {
+          "path": "artifacts/00_workflow_control/01_state/workflow_state.sqlite",
+          "min_bytes": 1000,
+          "binary": true,
+          "required_markers": []
+        },
+        {
+          "path": "drafts/corrected_review.md",
+          "min_bytes": 1000,
+          "required_markers": [
+            "# Assembled Review Draft",
+            "#### Citation Register"
+          ]
+        },
+        {
+          "path": "drafts/final_review.md",
+          "min_bytes": 1000,
+          "required_markers": [
+            "## Abstract",
+            "## Main Review",
+            "## References"
+          ]
+        },
+        {
+          "path": "artifacts/12_final_review/README.md",
+          "min_bytes": 300,
+          "required_markers": [
+            "# Final Review Artifacts",
+            "01_inputs",
+            "02_outputs",
+            "03_verification",
+            "04_outputs"
+          ]
+        },
+        {
+          "path": "artifacts/12_final_review/01_inputs/final_review_manifest.csv",
+          "min_bytes": 100,
+          "required_markers": [
+            "section_id,section_type,title,source_subsection_id,citation_count,uncertainty_note_count,section_status,notes"
+          ]
+        },
+        {
+          "path": "artifacts/12_final_review/02_outputs/final_review.md",
+          "min_bytes": 1000,
+          "required_markers": [
+            "## Abstract",
+            "## References"
+          ]
+        },
+        {
+          "path": "artifacts/12_final_review/02_outputs/references.csv",
+          "min_bytes": 100,
+          "required_markers": [
+            "reference_number,paper_id,authors,PMID,PMCID,DOI,title,journal,publication_year,publication_types"
+          ]
+        },
+        {
+          "path": "artifacts/12_final_review/03_verification/final_review_check.csv",
+          "min_bytes": 100,
+          "required_markers": [
+            "check_name,check_status,observed_value,notes"
+          ]
+        },
+        {
+          "path": "artifacts/12_final_review/04_outputs/final_review_summary.md",
+          "min_bytes": 300,
+          "required_markers": [
+            "# Final Review Summary",
+            "## Counts",
+            "## Writer Rule",
+            "## Downstream Use"
+          ]
+        }
+      ],
+      "allowed_paths": [
+        "original_user_prompt.md",
+        "logs/agent_screen_log.md",
+        "inputs/structured_instruction.md",
+        "inputs/run_config.md",
+        "inputs/intake_self_check.md",
+        "inputs/terminology_alias_overrides.csv",
+        "drafts/initial_review.md",
+        "drafts/assembled_review.md",
+        "drafts/corrected_review.md",
+        "drafts/final_review.md",
+        "artifacts/README.md",
+        "artifacts/11_corrective_rewrite/README.md",
+        "artifacts/11_corrective_rewrite/01_inputs/correction_manifest.csv",
+        "artifacts/11_corrective_rewrite/02_outputs/corrected_review.md",
+        "artifacts/11_corrective_rewrite/03_verification/corrective_rewrite_check.csv",
+        "artifacts/11_corrective_rewrite/04_outputs/corrective_rewrite_summary.md",
+        "artifacts/12_final_review/README.md",
+        "artifacts/12_final_review/01_inputs/final_review_manifest.csv",
+        "artifacts/12_final_review/02_outputs/final_review.md",
+        "artifacts/12_final_review/02_outputs/references.csv",
+        "artifacts/12_final_review/03_verification/final_review_check.csv",
+        "artifacts/12_final_review/04_outputs/final_review_summary.md"
+      ],
+      "allowed_path_prefixes": [
+        "artifacts/00_workflow_control",
+        "artifacts/01_draft_validation",
+        "artifacts/02_subsection_retrieval",
+        "artifacts/03_semantic_abstract_review",
+        "artifacts/04_primary_full_text_ingestion",
+        "artifacts/05_full_text_rag_index",
+        "artifacts/06_subsection_rag_retrieval",
+        "artifacts/07_subsection_rewrite",
+        "artifacts/08_terminology_normalization",
+        "artifacts/09_review_assembly",
+        "artifacts/10_claim_verification",
+        "artifacts/11_corrective_rewrite"
+      ],
+      "disallowed_path_patterns": [
+        "artifacts/13_",
+        ".docx",
+        ".pptx"
+      ]
+    }
+  }
+}

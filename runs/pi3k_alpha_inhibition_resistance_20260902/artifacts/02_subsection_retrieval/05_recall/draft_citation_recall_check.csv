@@ -1,0 +1,38 @@
+subsection_id,citation_id,citation,PMID,DOI,discovery_provenance,found_in_final_set,controller_decision,notes
+SUB001,S01-C001,"Andre et al., 2019, SOLAR-1 alpelisib plus fulvestrant",31091374,10.1056/NEJMoa1813904,local_prior_run,yes,recovered,Recovered in PubMed candidate set.
+SUB001,S01-C002,"De Angelis et al., 2026, PIK3CA testing consensus",41999684,10.1016/j.breast.2026.104786,local_prior_run,yes,recovered,Recovered in PubMed candidate set.
+SUB002,S02-C001,"Andre et al., 2019, SOLAR-1 primary report",31091374,10.1056/NEJMoa1813904,local_prior_run,yes,recovered,Recovered in PubMed candidate set.
+SUB002,S02-C002,"Andre et al., 2021, SOLAR-1 final overall survival",33246021,10.1016/j.annonc.2020.11.011,local_prior_run,yes,recovered,Recovered in PubMed candidate set.
+SUB002,S02-C003,"Rugo et al., BYLieve cohort A",39637900,unknown,local_prior_run,yes,recovered,Recovered in PubMed candidate set.
+SUB003,S03-C001,"Wedam et al., 2025, FDA approval summary for inavolisib combination",40845250,10.1200/JCO-25-00663,local_prior_run,yes,recovered,Recovered in PubMed candidate set.
+SUB003,S03-C002,Overall survival with inavolisib in PIK3CA-mutated advanced breast cancer,40454641,unknown,local_prior_run,yes,recovered,Recovered in PubMed candidate set.
+SUB003,S03-C003,"Varkaris et al., RLY-2608 discovery and clinical proof-of-concept",unknown,unknown,citation_needed,no,recover_with_targeted_query,Not recovered by current query set; needs targeted query or manual lookup.
+SUB003,S03-C004,"Buckbinder et al., 2023, STX-478 mutant-selective allosteric inhibitor",37623743,unknown,local_prior_run,yes,recovered,Recovered in PubMed candidate set.
+SUB004,S04-C001,"Juric et al., 2015, convergent PTEN loss and resistance to BYL719",25409150,10.1038/nature13948,local_prior_run,yes,recovered,Recovered in PubMed candidate set.
+SUB004,S04-C002,"Varkaris et al., 2024, acquired resistance alterations during alpelisib/inavolisib therapy",37916958,10.1158/2159-8290.CD-23-0704,local_prior_run,yes,recovered,Recovered in PubMed candidate set.
+SUB005,S05-C001,"Varkaris et al., 2024, secondary PIK3CA resistance mutations",37916958,10.1158/2159-8290.CD-23-0704,local_prior_run,yes,recovered,Recovered in PubMed candidate set.
+SUB005,S05-C002,"Varkaris et al., 2024, RLY-2608 overcoming resistance mutations",37916958,10.1158/2159-8290.CD-23-0704,local_prior_run,yes,recovered,Recovered in PubMed candidate set.
+SUB006,S06-C001,"Varkaris et al., 2024, acquired pathway alterations",37916958,10.1158/2159-8290.CD-23-0704,local_prior_run,yes,recovered,Recovered in PubMed candidate set.
+SUB007,S07-C001,"Varkaris et al., 2024, acquired resistance landscape",37916958,10.1158/2159-8290.CD-23-0704,local_prior_run,yes,recovered,Recovered in PubMed candidate set.
+SUB008,S08-C004,CD36 inhibition with PI3K inhibitors in PTEN-loss anti-HER2 resistant breast cancer cells,39920872,unknown,local_prior_run,yes,recovered,Recovered in PubMed candidate set.
+SUB009,S09-C001,"Andre et al., 2019, SOLAR-1",31091374,10.1056/NEJMoa1813904,local_prior_run,yes,recovered,Recovered in PubMed candidate set.
+SUB009,S09-C002,"Rugo et al., BYLieve cohort A",39637900,unknown,local_prior_run,yes,recovered,Recovered in PubMed candidate set.
+SUB009,S09-C003,"Wedam et al., 2025, inavolisib approval summary",40845250,10.1200/JCO-25-00663,local_prior_run,yes,recovered,Recovered in PubMed candidate set.
+SUB010,S10-C001,"Varkaris et al., 2024, patient acquired resistance analysis",37916958,10.1158/2159-8290.CD-23-0704,local_prior_run,yes,recovered,Recovered in PubMed candidate set.
+SUB012,S12-C001,CD36 inhibition with PI3K inhibitors in PTEN-loss anti-HER2 resistant breast cancer cells,39920872,unknown,local_prior_run,yes,recovered,Recovered in PubMed candidate set.
+SUB013,S13-C001,"Andre et al., 2019, SOLAR-1",31091374,10.1056/NEJMoa1813904,local_prior_run,yes,recovered,Recovered in PubMed candidate set.
+SUB013,S13-C002,"Andre et al., 2021, SOLAR-1 final OS",33246021,10.1016/j.annonc.2020.11.011,local_prior_run,yes,recovered,Recovered in PubMed candidate set.
+SUB013,S13-C003,"Rugo et al., BYLieve cohort A",39637900,unknown,local_prior_run,yes,recovered,Recovered in PubMed candidate set.
+SUB013,S13-C004,Overall survival with inavolisib in PIK3CA-mutated advanced breast cancer,40454641,unknown,local_prior_run,yes,recovered,Recovered in PubMed candidate set.
+SUB014,S14-C001,"Dent et al., 2021, SANDPIPER taselisib phase III",33186740,10.1016/j.annonc.2020.10.596,local_prior_run,yes,recovered,Recovered in PubMed candidate set.
+SUB015,S15-C001,"Wedam et al., 2025, inavolisib plus palbociclib and fulvestrant approval summary",40845250,10.1200/JCO-25-00663,local_prior_run,yes,recovered,Recovered in PubMed candidate set.
+SUB015,S15-C002,INAVO120 safety analyses,42202490,10.1016/j.esmoop.2026.107735,local_prior_run,yes,recovered,Recovered in PubMed candidate set.
+SUB016,S16-C001,"Varkaris et al., RLY-2608 discovery and clinical proof-of-concept",unknown,unknown,citation_needed,no,recover_with_targeted_query,Not recovered by current query set; needs targeted query or manual lookup.
+SUB016,S16-C002,"Varkaris et al., 2024, acquired resistance and RLY-2608",37916958,10.1158/2159-8290.CD-23-0704,local_prior_run,yes,recovered,Recovered in PubMed candidate set.
+SUB016,S16-C003,"Buckbinder et al., 2023, STX-478",37623743,unknown,local_prior_run,yes,recovered,Recovered in PubMed candidate set.
+SUB017,S17-C001,"Andre et al., 2019, SOLAR-1 biomarker-selected trial",31091374,10.1056/NEJMoa1813904,local_prior_run,yes,recovered,Recovered in PubMed candidate set.
+SUB017,S17-C002,"De Angelis et al., 2026, PIK3CA testing consensus",41999684,10.1016/j.breast.2026.104786,local_prior_run,yes,recovered,Recovered in PubMed candidate set.
+SUB017,S17-C003,"Varkaris et al., 2024, acquired alterations",37916958,10.1158/2159-8290.CD-23-0704,local_prior_run,yes,recovered,Recovered in PubMed candidate set.
+SUB018,S18-C001,"Juric et al., 2015, PTEN loss resistance",25409150,10.1038/nature13948,local_prior_run,yes,recovered,Recovered in PubMed candidate set.
+SUB018,S18-C002,"Varkaris et al., 2024, acquired resistance mechanisms",37916958,10.1158/2159-8290.CD-23-0704,local_prior_run,yes,recovered,Recovered in PubMed candidate set.
+SUB018,S18-C003,"Dent et al., 2021, SANDPIPER",33186740,10.1016/j.annonc.2020.10.596,local_prior_run,yes,recovered,Recovered in PubMed candidate set.

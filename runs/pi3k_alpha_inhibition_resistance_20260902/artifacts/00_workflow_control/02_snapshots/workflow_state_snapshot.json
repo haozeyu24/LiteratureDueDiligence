@@ -1,0 +1,10 @@
+{
+  "schema_version": 1,
+  "run_dir": "runs/pi3k_alpha_inhibition_resistance_20260902",
+  "sqlite_path": "runs/pi3k_alpha_inhibition_resistance_20260902/artifacts/00_workflow_control/01_state/workflow_state.sqlite",
+  "status": "initialized",
+  "current_step": "subsection_retrieval",
+  "subsection_count": 18,
+  "draft_citation_count": 72,
+  "next_action": "create_query_plan_and_abstract_review_rules"
+}

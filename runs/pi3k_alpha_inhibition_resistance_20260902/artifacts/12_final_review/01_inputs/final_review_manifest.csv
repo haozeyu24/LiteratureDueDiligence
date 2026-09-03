@@ -1,0 +1,28 @@
+section_id,section_type,title,source_subsection_id,citation_count,uncertainty_note_count,section_status,notes
+FRONT-ABSTRACT,front_matter,Abstract,,0,0,assembled,Generated from structured objective and chapter map.
+CH01,chapter,Clinical And Biological Rationale,,0,0,assembled,Chapter heading preserved from corrected review.
+SUB001,subsection,PIK3CA Alteration As A Therapeutic Entry Point,SUB001,8,1,assembled,Reader-facing subsection prose preserved and lightly polished from corrected review.
+SUB002,subsection,Approved PI3K-alpha Inhibition And Clinical Benefit,SUB002,11,1,assembled,Reader-facing subsection prose preserved and lightly polished from corrected review.
+SUB003,subsection,Investigational Agents And Therapeutic-Index Hypothesis,SUB003,9,2,assembled,Reader-facing subsection prose preserved and lightly polished from corrected review.
+CH02,chapter,On-Target And Pathway Reactivation Resistance,,0,0,assembled,Chapter heading preserved from corrected review.
+SUB004,subsection,PTEN Loss As Acquired Resistance,SUB004,7,1,assembled,Reader-facing subsection prose preserved and lightly polished from corrected review.
+SUB005,subsection,Secondary PIK3CA Mutations,SUB005,3,1,assembled,Reader-facing subsection prose preserved and lightly polished from corrected review.
+SUB006,subsection,AKT/mTOR Axis Compensation,SUB006,6,2,assembled,Reader-facing subsection prose preserved and lightly polished from corrected review.
+CH03,chapter,Bypass Signaling And Crosstalk,,0,0,assembled,Chapter heading preserved from corrected review.
+SUB007,subsection,MAPK/ERK Bypass,SUB007,7,1,assembled,Reader-facing subsection prose preserved and lightly polished from corrected review.
+SUB008,subsection,HER2/ERBB And Receptor Tyrosine Kinase Crosstalk,SUB008,9,2,assembled,Reader-facing subsection prose preserved and lightly polished from corrected review.
+SUB009,subsection,Endocrine Therapy Crosstalk,SUB009,6,2,assembled,Reader-facing subsection prose preserved and lightly polished from corrected review.
+CH04,chapter,Cellular State And Microenvironmental Resistance,,0,0,assembled,Chapter heading preserved from corrected review.
+SUB010,subsection,Tumor Heterogeneity And Clonal Selection,SUB010,5,1,assembled,Reader-facing subsection prose preserved and lightly polished from corrected review.
+SUB011,subsection,Phenotypic Plasticity And Lineage Adaptation,SUB011,6,1,assembled,Reader-facing subsection prose preserved and lightly polished from corrected review.
+SUB012,subsection,Metabolic And Microenvironmental Escape,SUB012,9,1,assembled,Reader-facing subsection prose preserved and lightly polished from corrected review.
+CH05,chapter,Clinical Trials As Resistance Evidence,,0,0,assembled,Chapter heading preserved from corrected review.
+SUB013,subsection,Positive Trials And Durable-Benefit Limits,SUB013,9,1,assembled,Reader-facing subsection prose preserved and lightly polished from corrected review.
+SUB014,subsection,"Failed, Negative, Or Limited Trials",SUB014,11,1,assembled,Reader-facing subsection prose preserved and lightly polished from corrected review.
+SUB015,subsection,Combination Trials Designed To Overcome Resistance,SUB015,11,1,assembled,Reader-facing subsection prose preserved and lightly polished from corrected review.
+CH06,chapter,Next-Generation Inhibitors And Future Resistance Questions,,0,0,assembled,Chapter heading preserved from corrected review.
+SUB016,subsection,Mutant-Selective And Allosteric PI3K-alpha Inhibitors,SUB016,8,1,assembled,Reader-facing subsection prose preserved and lightly polished from corrected review.
+SUB017,subsection,Biomarker Strategy And Patient Selection,SUB017,16,2,assembled,Reader-facing subsection prose preserved and lightly polished from corrected review.
+SUB018,subsection,Verification Priorities For The Next Workflow Stages,SUB018,14,1,assembled,Reader-facing subsection prose preserved and lightly polished from corrected review.
+BACK-HUMAN-INSPECTION,back_matter,Synthesis For Human Inspection,,0,0,assembled,Consolidates uncertainty notes for human review.
+BACK-REFERENCES,back_matter,References,,62,0,assembled,Deduplicated numbered reference list.

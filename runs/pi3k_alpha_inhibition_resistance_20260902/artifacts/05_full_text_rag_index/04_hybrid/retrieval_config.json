@@ -1,0 +1,14 @@
+{
+  "chunk_policy": "structure_aware_1000_150",
+  "embedding_model": "text-embedding-3-small",
+  "semantic_backend": "qdrant_local",
+  "collection_name": "full_text_primary_1000o150_te3_small",
+  "lexical_backend": "rank_bm25.BM25Okapi",
+  "hybrid_fusion": "reciprocal_rank_fusion",
+  "paper_level_selection": {
+    "target_papers_per_subsection": 10,
+    "max_chunks_per_paper_for_initial_ranking": 2,
+    "rank_chunks_first_then_aggregate_to_papers": true,
+    "rewrite_uses_paper_packets_not_isolated_chunks": true
+  }
+}

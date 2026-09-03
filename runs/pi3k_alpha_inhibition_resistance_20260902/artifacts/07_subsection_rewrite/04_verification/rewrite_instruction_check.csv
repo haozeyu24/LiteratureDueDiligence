@@ -1,0 +1,19 @@
+subsection_id,rewritten_path,check_status,has_rewritten_text,meets_expansion_floor,has_paper_triage,triages_all_packet_papers,has_citation_register,citation_register_traceable,has_inline_citations,inline_citations_registered,registered_citations_used,acknowledges_full_text_sources,has_structured_evidence_details,allowed_triage_roles,allowed_support_statuses,uses_packet_papers,has_residual_uncertainty,no_new_untraced_citations,notes
+SUB001,artifacts/07_subsection_rewrite/03_rewritten_subsections/SUB001.md,pass,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,All deterministic rewrite checks passed.
+SUB002,artifacts/07_subsection_rewrite/03_rewritten_subsections/SUB002.md,pass,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,All deterministic rewrite checks passed.
+SUB003,artifacts/07_subsection_rewrite/03_rewritten_subsections/SUB003.md,pass,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,All deterministic rewrite checks passed.
+SUB004,artifacts/07_subsection_rewrite/03_rewritten_subsections/SUB004.md,pass,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,All deterministic rewrite checks passed.
+SUB005,artifacts/07_subsection_rewrite/03_rewritten_subsections/SUB005.md,pass,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,All deterministic rewrite checks passed.
+SUB006,artifacts/07_subsection_rewrite/03_rewritten_subsections/SUB006.md,pass,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,All deterministic rewrite checks passed.
+SUB007,artifacts/07_subsection_rewrite/03_rewritten_subsections/SUB007.md,pass,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,All deterministic rewrite checks passed.
+SUB008,artifacts/07_subsection_rewrite/03_rewritten_subsections/SUB008.md,pass,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,All deterministic rewrite checks passed.
+SUB009,artifacts/07_subsection_rewrite/03_rewritten_subsections/SUB009.md,pass,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,All deterministic rewrite checks passed.
+SUB010,artifacts/07_subsection_rewrite/03_rewritten_subsections/SUB010.md,pass,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,All deterministic rewrite checks passed.
+SUB011,artifacts/07_subsection_rewrite/03_rewritten_subsections/SUB011.md,pass,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,All deterministic rewrite checks passed.
+SUB012,artifacts/07_subsection_rewrite/03_rewritten_subsections/SUB012.md,pass,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,All deterministic rewrite checks passed.
+SUB013,artifacts/07_subsection_rewrite/03_rewritten_subsections/SUB013.md,pass,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,All deterministic rewrite checks passed.
+SUB014,artifacts/07_subsection_rewrite/03_rewritten_subsections/SUB014.md,pass,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,All deterministic rewrite checks passed.
+SUB015,artifacts/07_subsection_rewrite/03_rewritten_subsections/SUB015.md,pass,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,All deterministic rewrite checks passed.
+SUB016,artifacts/07_subsection_rewrite/03_rewritten_subsections/SUB016.md,pass,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,All deterministic rewrite checks passed.
+SUB017,artifacts/07_subsection_rewrite/03_rewritten_subsections/SUB017.md,pass,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,All deterministic rewrite checks passed.
+SUB018,artifacts/07_subsection_rewrite/03_rewritten_subsections/SUB018.md,pass,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,All deterministic rewrite checks passed.

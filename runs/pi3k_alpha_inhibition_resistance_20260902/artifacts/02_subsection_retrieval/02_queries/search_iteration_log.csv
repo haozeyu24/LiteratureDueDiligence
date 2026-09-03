@@ -1,0 +1,73 @@
+subsection_id,query_id,iteration,run_status,result_count,count_status,controller_action,next_query_id,notes
+SUB001,SUB001-Q001,1,run,59,acceptable,accept_for_abstract_review,,Result count is suitable for abstract-review staging.
+SUB001,SUB001-Q002,1,run,311,too_many,refine_query,controller_to_assign,Query returned 311 records; 200 were staged as a top-relevance sample and the controller should refine before treating the subsection set as complete.
+SUB001,SUB001-Q003,1,run,311,too_many,refine_query,controller_to_assign,Query returned 311 records; 200 were staged as a top-relevance sample and the controller should refine before treating the subsection set as complete.
+SUB001,SUB001-Q004,1,run,2,too_few,broaden_query,controller_to_assign,Sparse result count; controller should broaden unless known draft anchors are recovered.
+SUB002,SUB002-Q001,1,run,18,acceptable,accept_for_abstract_review,,Result count is suitable for abstract-review staging.
+SUB002,SUB002-Q002,1,run,223,too_many,refine_query,controller_to_assign,Query returned 223 records; 200 were staged as a top-relevance sample and the controller should refine before treating the subsection set as complete.
+SUB002,SUB002-Q003,1,run,204,too_many,refine_query,controller_to_assign,Query returned 204 records; 200 were staged as a top-relevance sample and the controller should refine before treating the subsection set as complete.
+SUB002,SUB002-Q004,1,run,3,too_few,broaden_query,controller_to_assign,Sparse result count; controller should broaden unless known draft anchors are recovered.
+SUB003,SUB003-Q001,1,run,1,too_few,broaden_query,controller_to_assign,Sparse result count; controller should broaden unless known draft anchors are recovered.
+SUB003,SUB003-Q002,1,run,6,acceptable,accept_for_abstract_review,,Result count is suitable for abstract-review staging.
+SUB003,SUB003-Q003,1,run,10,acceptable,accept_for_abstract_review,,Result count is suitable for abstract-review staging.
+SUB003,SUB003-Q004,1,run,3,too_few,broaden_query,controller_to_assign,Sparse result count; controller should broaden unless known draft anchors are recovered.
+SUB004,SUB004-Q001,1,run,2244,too_many,refine_query,controller_to_assign,Query returned 2244 records; 200 were staged as a top-relevance sample and the controller should refine before treating the subsection set as complete.
+SUB004,SUB004-Q002,1,run,2304,too_many,refine_query,controller_to_assign,Query returned 2304 records; 200 were staged as a top-relevance sample and the controller should refine before treating the subsection set as complete.
+SUB004,SUB004-Q003,1,run,973,too_many,refine_query,controller_to_assign,Query returned 973 records; 200 were staged as a top-relevance sample and the controller should refine before treating the subsection set as complete.
+SUB004,SUB004-Q004,1,run,2,too_few,broaden_query,controller_to_assign,Sparse result count; controller should broaden unless known draft anchors are recovered.
+SUB005,SUB005-Q001,1,run,1695,too_many,refine_query,controller_to_assign,Query returned 1695 records; 200 were staged as a top-relevance sample and the controller should refine before treating the subsection set as complete.
+SUB005,SUB005-Q002,1,run,3606,too_many,refine_query,controller_to_assign,Query returned 3606 records; 200 were staged as a top-relevance sample and the controller should refine before treating the subsection set as complete.
+SUB005,SUB005-Q003,1,run,3315,too_many,refine_query,controller_to_assign,Query returned 3315 records; 200 were staged as a top-relevance sample and the controller should refine before treating the subsection set as complete.
+SUB005,SUB005-Q004,1,run,1,too_few,broaden_query,controller_to_assign,Sparse result count; controller should broaden unless known draft anchors are recovered.
+SUB006,SUB006-Q001,1,run,7627,too_many,refine_query,controller_to_assign,Query returned 7627 records; 200 were staged as a top-relevance sample and the controller should refine before treating the subsection set as complete.
+SUB006,SUB006-Q002,1,run,5295,too_many,refine_query,controller_to_assign,Query returned 5295 records; 200 were staged as a top-relevance sample and the controller should refine before treating the subsection set as complete.
+SUB006,SUB006-Q003,1,run,3643,too_many,refine_query,controller_to_assign,Query returned 3643 records; 200 were staged as a top-relevance sample and the controller should refine before treating the subsection set as complete.
+SUB006,SUB006-Q004,1,run,1,too_few,broaden_query,controller_to_assign,Sparse result count; controller should broaden unless known draft anchors are recovered.
+SUB007,SUB007-Q001,1,run,14,acceptable,accept_for_abstract_review,,Result count is suitable for abstract-review staging.
+SUB007,SUB007-Q002,1,run,698,too_many,refine_query,controller_to_assign,Query returned 698 records; 200 were staged as a top-relevance sample and the controller should refine before treating the subsection set as complete.
+SUB007,SUB007-Q003,1,run,158,acceptable,accept_for_abstract_review,,Result count is suitable for abstract-review staging.
+SUB007,SUB007-Q004,1,run,1,too_few,broaden_query,controller_to_assign,Sparse result count; controller should broaden unless known draft anchors are recovered.
+SUB008,SUB008-Q001,1,run,138,acceptable,accept_for_abstract_review,,Result count is suitable for abstract-review staging.
+SUB008,SUB008-Q002,1,run,1083,too_many,refine_query,controller_to_assign,Query returned 1083 records; 200 were staged as a top-relevance sample and the controller should refine before treating the subsection set as complete.
+SUB008,SUB008-Q003,1,run,4487,too_many,refine_query,controller_to_assign,Query returned 4487 records; 200 were staged as a top-relevance sample and the controller should refine before treating the subsection set as complete.
+SUB008,SUB008-Q004,1,run,1,too_few,broaden_query,controller_to_assign,Sparse result count; controller should broaden unless known draft anchors are recovered.
+SUB009,SUB009-Q001,1,run,6,acceptable,accept_for_abstract_review,,Result count is suitable for abstract-review staging.
+SUB009,SUB009-Q002,1,run,23,acceptable,accept_for_abstract_review,,Result count is suitable for abstract-review staging.
+SUB009,SUB009-Q003,1,run,52,acceptable,accept_for_abstract_review,,Result count is suitable for abstract-review staging.
+SUB009,SUB009-Q004,1,run,3,too_few,broaden_query,controller_to_assign,Sparse result count; controller should broaden unless known draft anchors are recovered.
+SUB010,SUB010-Q001,1,run,1084,too_many,refine_query,controller_to_assign,Query returned 1084 records; 200 were staged as a top-relevance sample and the controller should refine before treating the subsection set as complete.
+SUB010,SUB010-Q002,1,run,254,too_many,refine_query,controller_to_assign,Query returned 254 records; 200 were staged as a top-relevance sample and the controller should refine before treating the subsection set as complete.
+SUB010,SUB010-Q003,1,run,264,too_many,refine_query,controller_to_assign,Query returned 264 records; 200 were staged as a top-relevance sample and the controller should refine before treating the subsection set as complete.
+SUB010,SUB010-Q004,1,run,1,too_few,broaden_query,controller_to_assign,Sparse result count; controller should broaden unless known draft anchors are recovered.
+SUB011,SUB011-Q001,1,run,867,too_many,refine_query,controller_to_assign,Query returned 867 records; 200 were staged as a top-relevance sample and the controller should refine before treating the subsection set as complete.
+SUB011,SUB011-Q002,1,run,2621,too_many,refine_query,controller_to_assign,Query returned 2621 records; 200 were staged as a top-relevance sample and the controller should refine before treating the subsection set as complete.
+SUB011,SUB011-Q003,1,run,979,too_many,refine_query,controller_to_assign,Query returned 979 records; 200 were staged as a top-relevance sample and the controller should refine before treating the subsection set as complete.
+SUB011,SUB011-Q004,1,run,2621,too_many,refine_query,controller_to_assign,Query returned 2621 records; 200 were staged as a top-relevance sample and the controller should refine before treating the subsection set as complete.
+SUB012,SUB012-Q001,1,run,56,acceptable,accept_for_abstract_review,,Result count is suitable for abstract-review staging.
+SUB012,SUB012-Q002,1,run,2037,too_many,refine_query,controller_to_assign,Query returned 2037 records; 200 were staged as a top-relevance sample and the controller should refine before treating the subsection set as complete.
+SUB012,SUB012-Q003,1,run,951,too_many,refine_query,controller_to_assign,Query returned 951 records; 200 were staged as a top-relevance sample and the controller should refine before treating the subsection set as complete.
+SUB012,SUB012-Q004,1,run,1,too_few,broaden_query,controller_to_assign,Sparse result count; controller should broaden unless known draft anchors are recovered.
+SUB013,SUB013-Q001,1,run,5,too_few,broaden_query,controller_to_assign,Sparse result count; controller should broaden unless known draft anchors are recovered.
+SUB013,SUB013-Q002,1,run,35,acceptable,accept_for_abstract_review,,Result count is suitable for abstract-review staging.
+SUB013,SUB013-Q003,1,run,216,too_many,refine_query,controller_to_assign,Query returned 216 records; 200 were staged as a top-relevance sample and the controller should refine before treating the subsection set as complete.
+SUB013,SUB013-Q004,1,run,4,too_few,broaden_query,controller_to_assign,Sparse result count; controller should broaden unless known draft anchors are recovered.
+SUB014,SUB014-Q001,1,run,172,acceptable,accept_for_abstract_review,,Result count is suitable for abstract-review staging.
+SUB014,SUB014-Q002,1,run,423,too_many,refine_query,controller_to_assign,Query returned 423 records; 200 were staged as a top-relevance sample and the controller should refine before treating the subsection set as complete.
+SUB014,SUB014-Q003,1,run,3257,too_many,refine_query,controller_to_assign,Query returned 3257 records; 200 were staged as a top-relevance sample and the controller should refine before treating the subsection set as complete.
+SUB014,SUB014-Q004,1,run,1,too_few,broaden_query,controller_to_assign,Sparse result count; controller should broaden unless known draft anchors are recovered.
+SUB015,SUB015-Q001,1,run,11,acceptable,accept_for_abstract_review,,Result count is suitable for abstract-review staging.
+SUB015,SUB015-Q002,1,run,13,acceptable,accept_for_abstract_review,,Result count is suitable for abstract-review staging.
+SUB015,SUB015-Q003,1,run,895,too_many,refine_query,controller_to_assign,Query returned 895 records; 200 were staged as a top-relevance sample and the controller should refine before treating the subsection set as complete.
+SUB015,SUB015-Q004,1,run,2,too_few,broaden_query,controller_to_assign,Sparse result count; controller should broaden unless known draft anchors are recovered.
+SUB016,SUB016-Q001,1,run,2,too_few,broaden_query,controller_to_assign,Sparse result count; controller should broaden unless known draft anchors are recovered.
+SUB016,SUB016-Q002,1,run,17,acceptable,accept_for_abstract_review,,Result count is suitable for abstract-review staging.
+SUB016,SUB016-Q003,1,run,17,acceptable,accept_for_abstract_review,,Result count is suitable for abstract-review staging.
+SUB016,SUB016-Q004,1,run,2,too_few,broaden_query,controller_to_assign,Sparse result count; controller should broaden unless known draft anchors are recovered.
+SUB017,SUB017-Q001,1,run,280,too_many,refine_query,controller_to_assign,Query returned 280 records; 200 were staged as a top-relevance sample and the controller should refine before treating the subsection set as complete.
+SUB017,SUB017-Q002,1,run,264,too_many,refine_query,controller_to_assign,Query returned 264 records; 200 were staged as a top-relevance sample and the controller should refine before treating the subsection set as complete.
+SUB017,SUB017-Q003,1,run,183,acceptable,accept_for_abstract_review,,Result count is suitable for abstract-review staging.
+SUB017,SUB017-Q004,1,run,3,too_few,broaden_query,controller_to_assign,Sparse result count; controller should broaden unless known draft anchors are recovered.
+SUB018,SUB018-Q001,1,run,0,too_few,broaden_query,controller_to_assign,No PubMed records returned; controller should broaden terms or use manual lookup.
+SUB018,SUB018-Q002,1,run,17,acceptable,accept_for_abstract_review,,Result count is suitable for abstract-review staging.
+SUB018,SUB018-Q003,1,run,17,acceptable,accept_for_abstract_review,,Result count is suitable for abstract-review staging.
+SUB018,SUB018-Q004,1,run,3,too_few,broaden_query,controller_to_assign,Sparse result count; controller should broaden unless known draft anchors are recovered.

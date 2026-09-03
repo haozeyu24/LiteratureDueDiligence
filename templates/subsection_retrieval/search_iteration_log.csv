@@ -1,0 +1,2 @@
+subsection_id,query_id,iteration,run_status,result_count,count_status,controller_action,next_query_id,notes
+SUB001,SUB001-Q001,1,not_run,unknown,needs_manual_search,run_query_or_estimate_count,unknown,Template row.

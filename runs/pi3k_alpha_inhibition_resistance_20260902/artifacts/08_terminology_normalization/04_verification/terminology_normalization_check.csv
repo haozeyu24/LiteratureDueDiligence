@@ -1,0 +1,19 @@
+subsection_id,normalized_path,check_status,has_text,applies_known_aliases,preserves_citation_ids,notes
+SUB001,artifacts/08_terminology_normalization/03_normalized_subsections/SUB001.md,pass,1,1,1,All deterministic terminology checks passed.
+SUB002,artifacts/08_terminology_normalization/03_normalized_subsections/SUB002.md,pass,1,1,1,All deterministic terminology checks passed.
+SUB003,artifacts/08_terminology_normalization/03_normalized_subsections/SUB003.md,pass,1,1,1,All deterministic terminology checks passed.
+SUB004,artifacts/08_terminology_normalization/03_normalized_subsections/SUB004.md,pass,1,1,1,All deterministic terminology checks passed.
+SUB005,artifacts/08_terminology_normalization/03_normalized_subsections/SUB005.md,pass,1,1,1,All deterministic terminology checks passed.
+SUB006,artifacts/08_terminology_normalization/03_normalized_subsections/SUB006.md,pass,1,1,1,All deterministic terminology checks passed.
+SUB007,artifacts/08_terminology_normalization/03_normalized_subsections/SUB007.md,pass,1,1,1,All deterministic terminology checks passed.
+SUB008,artifacts/08_terminology_normalization/03_normalized_subsections/SUB008.md,pass,1,1,1,All deterministic terminology checks passed.
+SUB009,artifacts/08_terminology_normalization/03_normalized_subsections/SUB009.md,pass,1,1,1,All deterministic terminology checks passed.
+SUB010,artifacts/08_terminology_normalization/03_normalized_subsections/SUB010.md,pass,1,1,1,All deterministic terminology checks passed.
+SUB011,artifacts/08_terminology_normalization/03_normalized_subsections/SUB011.md,pass,1,1,1,All deterministic terminology checks passed.
+SUB012,artifacts/08_terminology_normalization/03_normalized_subsections/SUB012.md,pass,1,1,1,All deterministic terminology checks passed.
+SUB013,artifacts/08_terminology_normalization/03_normalized_subsections/SUB013.md,pass,1,1,1,All deterministic terminology checks passed.
+SUB014,artifacts/08_terminology_normalization/03_normalized_subsections/SUB014.md,pass,1,1,1,All deterministic terminology checks passed.
+SUB015,artifacts/08_terminology_normalization/03_normalized_subsections/SUB015.md,pass,1,1,1,All deterministic terminology checks passed.
+SUB016,artifacts/08_terminology_normalization/03_normalized_subsections/SUB016.md,pass,1,1,1,All deterministic terminology checks passed.
+SUB017,artifacts/08_terminology_normalization/03_normalized_subsections/SUB017.md,pass,1,1,1,All deterministic terminology checks passed.
+SUB018,artifacts/08_terminology_normalization/03_normalized_subsections/SUB018.md,pass,1,1,1,All deterministic terminology checks passed.

@@ -1,0 +1,2 @@
+subsection_id,paper_id,PMID,PMCID,DOI,title,why_full_text_needed,download_priority,user_action
+SUB001,PAPER001,123456,unknown,unknown,Paper title,Claim verification requires methods/results not available in abstract,high,user_download_pdf

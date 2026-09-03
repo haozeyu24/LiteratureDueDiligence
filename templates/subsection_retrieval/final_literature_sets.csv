@@ -1,0 +1,2 @@
+subsection_id,paper_id,PMID,PMCID,DOI,title,journal,publication_year,article_type,abstract_review_decision,evidence_role,draft_access_status,verified_access_status,venue_trust_label,source_query_ids,reason
+SUB001,PAPER001,123456,unknown,unknown,Paper title,Journal,2026,primary_research,include_primary,primary_mechanism,access_unknown,unknown,unknown,SUB001-Q001,Template row.

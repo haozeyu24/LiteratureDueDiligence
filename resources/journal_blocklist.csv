@@ -1,0 +1,22 @@
+match_type,match_value,rationale
+journal_prefix,Frontiers in,User-selected hard venue exclusion for due-diligence intake.
+journal_exact,Oncotarget,User-selected hard venue exclusion for due-diligence intake.
+journal_exact,OncoTargets and therapy,User-selected hard venue exclusion for due-diligence intake.
+journal_exact,American journal of cancer research,User-selected hard venue exclusion for due-diligence intake.
+journal_exact,Oncology letters,User-selected hard venue exclusion for due-diligence intake.
+journal_exact,Translational cancer research,User-selected hard venue exclusion for due-diligence intake.
+journal_exact,Discover oncology,User-selected hard venue exclusion for due-diligence intake.
+journal_exact,Journal of Cancer,User-selected hard venue exclusion for due-diligence intake.
+journal_exact,Cureus,User-selected hard venue exclusion for due-diligence intake.
+journal_exact,Cells,User-selected aggressive venue exclusion for high-trust due diligence.
+journal_exact,Cancers,User-selected aggressive venue exclusion for high-trust due diligence.
+journal_exact,Biomedicines,User-selected aggressive venue exclusion for high-trust due diligence.
+journal_prefix,Diagnostics,User-selected aggressive venue exclusion for high-trust due diligence.
+journal_exact,Journal of clinical medicine,User-selected aggressive venue exclusion for high-trust due diligence.
+journal_exact,Pathogens,User-selected aggressive venue exclusion for high-trust due diligence.
+journal_prefix,Pathogens,User-selected aggressive venue exclusion for high-trust due diligence.
+journal_exact,Microorganisms,User-selected aggressive venue exclusion for high-trust due diligence.
+journal_exact,Pharmaceuticals,User-selected aggressive venue exclusion for high-trust due diligence.
+journal_exact,Biology,User-selected aggressive venue exclusion for high-trust due diligence.
+journal_exact,Heliyon,User-selected aggressive venue exclusion for high-trust due diligence.
+journal_exact,Diseases,User-selected aggressive venue exclusion for high-trust due diligence.

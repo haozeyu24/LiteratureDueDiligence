@@ -1,0 +1,5 @@
+check_name,check_status,observed_value,notes
+claim_manifest_populated,pass,123,Claim manifest is populated.
+work_orders_planned,pass,18,Claim work orders planned by subsection.
+all_claims_have_citations,pass,123,Every extracted claim has at least one cited paper ID.
+all_claims_have_review_paths,pass,123,Every extracted claim has a target review CSV path.

@@ -1,0 +1,8 @@
+check_name,check_status,observed_value,notes
+all_non_supported_claims_have_actions,pass,5/5,Every non-supported claim must have a correction manifest row.
+all_replacements_applied_once,pass,5/5,Each correction must apply exactly once to the assembled draft.
+no_problem_claim_text_remaining,pass,0,No original problem claim text remains.
+corrected_review_populated,pass,194736,Corrected review must be non-empty and review-scale.
+no_new_untraced_citations,pass,0,No new citation-like IDs introduced.
+no_new_untraced_paper_ids,pass,0,No new paper IDs introduced.
+problem_status_counts_recorded,pass,partially_supported:5,Non-supported status counts are recorded for audit.

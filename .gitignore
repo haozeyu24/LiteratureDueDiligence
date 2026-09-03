@@ -1,0 +1,40 @@
+.DS_Store
+__pycache__/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.venv/
+venv/
+*.pyc
+
+# Local secrets
+.env
+.env.*
+!.env.example
+
+# Runs are local by default. Keep only the PI3K example run visible.
+runs/*
+!runs/pi3k_alpha_inhibition_resistance_20260902/
+!runs/pi3k_alpha_inhibition_resistance_20260902/**
+
+# Keep bulky/generated stores out of the visible PI3K example run.
+runs/pi3k_alpha_inhibition_resistance_20260902/**/*.sqlite
+runs/pi3k_alpha_inhibition_resistance_20260902/**/*.sqlite-*
+runs/pi3k_alpha_inhibition_resistance_20260902/**/*.db
+runs/pi3k_alpha_inhibition_resistance_20260902/**/*.pkl
+runs/pi3k_alpha_inhibition_resistance_20260902/**/*.pdf
+runs/pi3k_alpha_inhibition_resistance_20260902/**/*.xml
+runs/pi3k_alpha_inhibition_resistance_20260902/**/*.tei
+runs/pi3k_alpha_inhibition_resistance_20260902/**/*.tei.xml
+runs/pi3k_alpha_inhibition_resistance_20260902/artifacts/00_workflow_control/01_state/
+runs/pi3k_alpha_inhibition_resistance_20260902/artifacts/02_subsection_retrieval/03_pubmed/
+runs/pi3k_alpha_inhibition_resistance_20260902/artifacts/02_subsection_retrieval/04_screening/
+runs/pi3k_alpha_inhibition_resistance_20260902/artifacts/03_semantic_abstract_review/03_batches/
+runs/pi3k_alpha_inhibition_resistance_20260902/artifacts/03_semantic_abstract_review/04_reviewed_batches/
+runs/pi3k_alpha_inhibition_resistance_20260902/artifacts/04_primary_full_text_ingestion/03_pmc/
+runs/pi3k_alpha_inhibition_resistance_20260902/artifacts/04_primary_full_text_ingestion/04_pdf/
+runs/pi3k_alpha_inhibition_resistance_20260902/artifacts/04_primary_full_text_ingestion/05_user_pdf_request/01_user_pdf_dropbox/
+runs/pi3k_alpha_inhibition_resistance_20260902/artifacts/05_full_text_rag_index/01_chunks/
+runs/pi3k_alpha_inhibition_resistance_20260902/artifacts/05_full_text_rag_index/02_lexical/
+runs/pi3k_alpha_inhibition_resistance_20260902/artifacts/05_full_text_rag_index/03_vector/
+runs/pi3k_alpha_inhibition_resistance_20260902/artifacts/06_subsection_rag_retrieval/02_chunk_hits/
