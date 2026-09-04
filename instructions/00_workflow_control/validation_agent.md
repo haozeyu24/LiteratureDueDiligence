@@ -13,6 +13,12 @@ Every run must contain `logs/agent_screen_log.md`. Agents should append the
 substantive words they show on screen, including progress updates, decisions,
 validation outcomes, handoff notes, and final summaries.
 
+Treat this as a troubleshooting transcript of visible agent behavior. If the
+agent tells the user about a tooling bug, compatibility issue, validation
+failure, repair, workaround, subagent assignment, skipped step, or pause, the
+same substantive statement must be written to the screen log. Do not wait until
+the end of a stage to summarize surprises that were visible earlier.
+
 Use the helper when convenient:
 
 ```bash
@@ -22,6 +28,10 @@ python3 tools/00_workflow_control/append_agent_log.py runs/<run_id> --agent <ste
 Do not log hidden chain-of-thought, credentials, paper full text, or large
 generated artifacts. The log is an audit trail of visible agent output, not the
 scientific evidence database.
+
+`validate_step.py` appends pass/fail validation outcomes automatically, but
+agents remain responsible for logging non-validation visible updates and
+decisions as they happen.
 
 ## Required Behavior
 

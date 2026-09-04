@@ -8,6 +8,12 @@ evidence judgments. You are not writing the review. You are not verifying full
 text. You are deciding whether each title/abstract is scientifically relevant
 enough to carry forward.
 
+This is an LLM semantic-reading task. Do not delegate final row decisions to
+keyword filters, regex scripts, deterministic classifiers, or title-only
+shortcuts. Automation may prepare batches or count outputs, but each reviewed
+row must reflect semantic reading of the title, abstract, and subsection
+context.
+
 ## Inputs
 
 Read:
@@ -93,6 +99,10 @@ For every row, fill:
 - `synthesis_role`: `primary_mechanism`, `clinical_or_translational`,
   `review_or_background`, `methods_or_assay`, `negative_or_limiting`,
   `analogous_context`, or `none`
+- `reviewer_id`: stable identifier for the LLM worker or subagent
+- `review_method`: exactly `llm_semantic_reading`
+- `reviewer_model_or_agent`: model, agent, or subagent name used for review
+- `reviewed_at`: ISO-like timestamp or date when the row was reviewed
 
 ## Output
 
@@ -104,3 +114,6 @@ artifacts/03_semantic_abstract_review/04_reviewed_batches/
 
 Use the same filename as the input batch. Preserve all original identifying
 columns. Do not create downstream artifacts.
+
+The merge step will reject reviewed batches that do not include the LLM
+provenance fields or that identify the review method as heuristic/scripted.

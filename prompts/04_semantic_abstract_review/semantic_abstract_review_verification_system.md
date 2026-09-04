@@ -10,6 +10,7 @@ Verify that:
 - `batch_manifest.csv` covers every subsection candidate row exactly once;
 - every batch has a matching subsection context file;
 - batch files contain all semantic-review fields;
+- batch files contain row-level LLM provenance fields;
 - no claim manifests, evidence packets, PDFs, rewritten sections, or final
   reviews were created.
 
@@ -23,7 +24,10 @@ For reviewed batches, verify that every row has:
   entity/context match, and evidence-directness label;
 - a non-empty `key_relevant_abstract_text`;
 - `missing_full_text_reason` filled;
+- `reviewer_id`, `reviewer_model_or_agent`, and `reviewed_at` filled;
+- `review_method` exactly equal to `llm_semantic_reading`;
 - identifying fields preserved from the input batch.
 
 Do not approve merge into subsection literature sets until every expected batch
-has a reviewed output file.
+has a reviewed output file. Do not approve reviewed batches produced by keyword
+filters, regex scripts, deterministic classifiers, or other non-LLM shortcuts.

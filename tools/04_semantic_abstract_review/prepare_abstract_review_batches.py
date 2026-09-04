@@ -29,6 +29,10 @@ SEMANTIC_FIELDS = [
     "evidence_directness",
     "key_relevant_abstract_text",
     "missing_full_text_reason",
+    "reviewer_id",
+    "review_method",
+    "reviewer_model_or_agent",
+    "reviewed_at",
 ]
 
 
@@ -271,6 +275,10 @@ def sqlite_candidate_rows_by_subsection(
             "synthesis_role": str(row["evidence_role"] or final_row.get("evidence_role", "unknown")),
             "venue_trust_label": str(row["venue_trust_label"] or final_row.get("venue_trust_label", "unknown")),
             "verified_access_status": str(row["verified_access_status"] or final_row.get("verified_access_status", "unknown")),
+            "reviewer_id": "not_reviewed",
+            "review_method": "not_reviewed",
+            "reviewer_model_or_agent": "not_reviewed",
+            "reviewed_at": "not_reviewed",
         }
         rows_by_subsection.setdefault(key[0], []).append(candidate)
     return rows_by_subsection
@@ -362,6 +370,10 @@ def write_batch_csv(path: Path, rows: list[dict[str, str]]) -> None:
         "synthesis_role",
         "venue_trust_label",
         "verified_access_status",
+        "reviewer_id",
+        "review_method",
+        "reviewer_model_or_agent",
+        "reviewed_at",
     ]
     normalized_rows = []
     for row in rows:
@@ -373,6 +385,10 @@ def write_batch_csv(path: Path, rows: list[dict[str, str]]) -> None:
         normalized["evidence_directness"] = "unknown"
         normalized["key_relevant_abstract_text"] = "not_reviewed"
         normalized["missing_full_text_reason"] = "unknown"
+        normalized["reviewer_id"] = "not_reviewed"
+        normalized["review_method"] = "not_reviewed"
+        normalized["reviewer_model_or_agent"] = "not_reviewed"
+        normalized["reviewed_at"] = "not_reviewed"
         normalized_rows.append(normalized)
     write_csv(path, normalized_rows, fieldnames)
 
@@ -411,6 +427,17 @@ For every candidate row, fill:
 - `key_relevant_abstract_text`: a brief phrase identifying the relevance signal
 - `missing_full_text_reason`: `not_needed_for_abstract_triage` or a concise
   reason full text is needed
+- `reviewer_id`: stable identifier for the LLM worker or subagent that reviewed
+  the row
+- `review_method`: exactly `llm_semantic_reading`
+- `reviewer_model_or_agent`: model, agent, or subagent name used for semantic
+  reading
+- `reviewed_at`: ISO-like timestamp or date when the row was reviewed
+
+Do not use scripts, keyword filters, regex classifiers, or deterministic
+heuristics to fill reviewed batch decisions. Such tools may prepare candidates
+or summarize counts, but the reviewed CSV rows must be produced by LLM semantic
+reading of the title, abstract, and subsection context.
 
 ## Inclusion Standard
 
@@ -462,6 +489,10 @@ Write reviewed batch outputs under
 `artifacts/03_semantic_abstract_review/04_reviewed_batches/` using the same filename
 as the input batch. Do not create rewritten sections, evidence packets, PDFs, or
 claim-verification artifacts in this step.
+
+Every reviewed output row must include row-level LLM provenance:
+`reviewer_id`, `review_method=llm_semantic_reading`,
+`reviewer_model_or_agent`, and `reviewed_at`.
 """,
         encoding="utf-8",
     )
@@ -520,7 +551,9 @@ Batch files contain required semantic review fields.
 
 No reviewed batch outputs, claim manifests, evidence packets, PDFs, rewritten
 sections, or final-review artifacts are created during setup. Workers should
-write reviewed CSVs only after receiving a specific batch assignment.
+write reviewed CSVs only after receiving a specific batch assignment. Reviewed
+CSV rows must include `review_method=llm_semantic_reading`; heuristic or
+script-filled decisions are not valid semantic abstract review.
 
 ## Parallelization Readiness
 

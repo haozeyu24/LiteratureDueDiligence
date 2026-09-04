@@ -60,6 +60,10 @@ REQUIRED_REVIEW_FIELDS = [
     "key_relevant_abstract_text",
     "missing_full_text_reason",
     "synthesis_role",
+    "reviewer_id",
+    "review_method",
+    "reviewer_model_or_agent",
+    "reviewed_at",
 ]
 FINAL_LITERATURE_FIELDS = [
     "subsection_id",
@@ -229,6 +233,17 @@ def validate_review_row(row: dict[str, str], row_label: str, errors: list[str]) 
         value = row.get(field, "").strip()
         if not value or value in {"unknown", "not_reviewed"}:
             errors.append(f"{field} is not filled on {row_label}")
+    if row.get("review_method", "").strip() != "llm_semantic_reading":
+        errors.append(
+            f"review_method on {row_label} must be `llm_semantic_reading`; "
+            "heuristic or script-filled abstract review is not accepted"
+        )
+    reviewer_id = row.get("reviewer_id", "").strip().lower()
+    if reviewer_id in {"", "unknown", "not_reviewed", "heuristic", "script", "regex", "keyword_filter"}:
+        errors.append(f"reviewer_id on {row_label} does not identify an LLM worker")
+    reviewer_model = row.get("reviewer_model_or_agent", "").strip().lower()
+    if reviewer_model in {"", "unknown", "not_reviewed", "heuristic", "script", "regex", "keyword_filter"}:
+        errors.append(f"reviewer_model_or_agent on {row_label} does not identify an LLM worker")
     if (
         row.get("venue_trust_label") == "hard_blocked"
         and row.get("abstract_review_decision") in INCLUDED_DECISIONS
@@ -271,7 +286,10 @@ def merge_batches(
         row["review_status"] = "review_complete"
         row["output_path"] = output_path
         if not row.get("assigned_worker") or row["assigned_worker"] == "unassigned":
-            row["assigned_worker"] = "batch_worker"
+            first_reviewed_row = read_csv(reviewed_paths[batch_id])[0]
+            row["assigned_worker"] = first_reviewed_row.get("reviewer_id", "")
+        if not row["assigned_worker"] or row["assigned_worker"] == "unassigned":
+            raise ValueError(f"{batch_id} has no assigned LLM worker")
         row["notes"] = "Reviewed batch merged into SQLite."
         connection.execute(
             """
@@ -392,7 +410,7 @@ def insert_decision(
             row["synthesis_role"],
             row.get("venue_trust_label", "unknown"),
             row.get("verified_access_status", "unknown"),
-            "abstract_review_worker",
+            row.get("reviewer_id", "abstract_review_worker"),
             source_csv_path,
             1,
             now,
@@ -726,6 +744,14 @@ def write_merge_report(
         WHERE global_review_status = 'globally_included_primary'
         """
     ).fetchone()[0]
+    reviewer_counts = connection.execute(
+        """
+        SELECT reviewer_id, COUNT(*)
+        FROM abstract_review_decisions
+        GROUP BY reviewer_id
+        ORDER BY reviewer_id
+        """
+    ).fetchall()
     lines = [
         "# Semantic Abstract Review Merge Report",
         "",
@@ -741,9 +767,25 @@ def write_merge_report(
         "- paper-level rollup table: `paper_review_rollup`",
         "- final literature set and user full-text queue were regenerated from SQLite.",
         "",
+        "## LLM Review Provenance",
+        "",
+        "- required review method: `llm_semantic_reading`",
+    ]
+    for reviewer_id, count in reviewer_counts:
+        lines.append(f"- `{reviewer_id}` reviewed rows: {count}")
+    lines.extend(
+        [
+            "",
+            "Heuristic, regex, or script-filled reviewed batches are not valid inputs to this merge step.",
+            "",
+        ]
+    )
+    lines.extend(
+        [
         "## Decision Counts",
         "",
-    ]
+        ]
+    )
     for decision, count in decision_counts:
         lines.append(f"- `{decision}`: {count}")
     lines.extend(
@@ -798,7 +840,7 @@ def compute_deduped_draft_pmid_recall(
     recall_path = (
         run_dir
         / "artifacts"
-        / "subsection_retrieval"
+        / "02_subsection_retrieval"
         / "05_recall"
         / "draft_citation_recall_check.csv"
     )

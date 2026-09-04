@@ -270,11 +270,10 @@ def write_manifest(run_dir: Path, subsections: list[dict[str, object]]) -> None:
     path = (
         run_dir
         / "artifacts"
-        / "subsection_retrieval"
+        / "02_subsection_retrieval"
         / "01_scope"
         / "subsection_manifest.csv"
     )
-    path.parent.mkdir(parents=True, exist_ok=True)
     path.parent.mkdir(parents=True, exist_ok=True)
     with path.open("w", newline="", encoding="utf-8") as handle:
         writer = csv.DictWriter(

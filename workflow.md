@@ -47,6 +47,10 @@ Every run must contain:
 
 Agents should append the substantive words they show on screen: progress
 updates, decisions, validation results, handoff notes, and final summaries.
+This includes tooling bugs, compatibility repairs, validation failures,
+workarounds, worker/subagent assignments, skipped steps, and pauses. If the
+human saw the operational statement on screen, the run log should contain the
+same substantive information.
 This log is not the canonical scientific evidence store. It is an audit trail
 for what the human and future agents saw during the run.
 
@@ -67,10 +71,13 @@ Use this entry shape:
 Do not store paper full text, hidden chain-of-thought, private credentials, or
 large generated artifacts in the screen log.
 
+`validate_step.py` writes validation pass/fail outcomes into the screen log
+automatically. Agents must still log non-validation progress and decisions.
+
 ## Paper And Venue Policy
 
 PubMed is the required primary literature discovery source for this workflow.
-Later steps may use other sources only when explicitly declared by a future
+Later steps may use other sources only when explicitly declared by a workflow
 module or requested by the user.
 
 Out-of-scope sources for the current workflow include patents, company websites,
@@ -320,6 +327,13 @@ subsection and its candidate PubMed titles/abstracts, compares each abstract
 directly with the subsection prose, and fills semantic review fields including
 mechanism match, entity/context match, evidence directness, semantic fit score,
 and why full text is or is not needed.
+
+Reviewed batch rows must be produced by LLM semantic reading of the subsection
+context plus each title/abstract. Keyword filters, regex scripts, and
+deterministic classifiers may prepare or audit candidates, but they must not
+create final reviewed rows. Every reviewed row must include `reviewer_id`,
+`review_method=llm_semantic_reading`, `reviewer_model_or_agent`, and
+`reviewed_at`.
 
 Prepare review batches:
 

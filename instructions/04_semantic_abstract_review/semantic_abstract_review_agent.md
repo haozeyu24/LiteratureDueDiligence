@@ -42,11 +42,24 @@ semantic-review decisions at summary level, validation results, and final
 summaries to `logs/agent_screen_log.md`. Do not include hidden chain-of-thought,
 credentials, paper full text, or large generated artifacts.
 
+Every screen-visible operational update must be appended to the run log,
+including validation failures, compatibility repairs, tooling bugs, manual
+workarounds, worker/subagent assignments, and decisions to pause or continue.
+If an agent tells the user something like "I found a compatibility issue" or
+"I am using a conservative workaround", the same substantive statement belongs
+in `logs/agent_screen_log.md`.
+
 ## Worker Task
 
 Each worker receives one subsection context file and one batch CSV. The worker
 must compare every candidate title and abstract directly with the subsection
 prose. Review scientific semantic fit, not keyword overlap alone.
+
+This is a required LLM semantic-reading step. Do not fill
+`04_reviewed_batches/` with regex, keyword, score-only, or deterministic script
+output. Scripts may prepare batches, count decisions, or validate schema, but
+the reviewed CSV rows must be produced by an LLM worker or subagent that reads
+the subsection context and each title/abstract.
 
 The purpose of this step is to preserve two different kinds of useful papers:
 
@@ -80,6 +93,10 @@ Fill every row with:
 - `key_relevant_abstract_text`
 - `missing_full_text_reason`
 - `synthesis_role`
+- `reviewer_id`
+- `review_method`: exactly `llm_semantic_reading`
+- `reviewer_model_or_agent`
+- `reviewed_at`
 
 ## Allowed Decisions
 
@@ -95,6 +112,12 @@ Fill every row with:
 This step is safe to parallelize after setup because each batch is independent.
 Use one worker per subsection or per subsection batch. The merge/controller step
 must happen after all worker batch outputs exist.
+
+When running in Codex, use real subagents or separate LLM worker tasks for the
+review batches when practical. Record the assigned worker identity in
+`abstract_review_status.csv`, and ensure every reviewed row contains row-level
+LLM provenance. A very fast local script-only pass is not semantic abstract
+review and must not be merged as if it were.
 
 ## Merge And Completion
 

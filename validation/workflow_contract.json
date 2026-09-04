@@ -649,6 +649,8 @@
           "required_markers": [
             "# Semantic Abstract Review Worker Instructions",
             "## Required Decisions",
+            "review_method",
+            "llm_semantic_reading",
             "## Inclusion Standard",
             "## Output Rule"
           ]
@@ -778,6 +780,8 @@
           "required_markers": [
             "# Semantic Abstract Review Worker Instructions",
             "## Required Decisions",
+            "review_method",
+            "llm_semantic_reading",
             "## Inclusion Standard",
             "## Output Rule"
           ]
@@ -894,6 +898,8 @@
           "required_markers": [
             "# Semantic Abstract Review Worker Instructions",
             "## Required Decisions",
+            "review_method",
+            "llm_semantic_reading",
             "## Inclusion Standard",
             "## Output Rule"
           ]
@@ -927,6 +933,8 @@
           "required_markers": [
             "# Semantic Abstract Review Merge Report",
             "## SQLite Merge",
+            "## LLM Review Provenance",
+            "llm_semantic_reading",
             "## Decision Counts",
             "## Deduped Draft-PMID Recall",
             "## Paper-Level Rollup",

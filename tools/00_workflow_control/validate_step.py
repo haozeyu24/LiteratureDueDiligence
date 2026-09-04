@@ -6,6 +6,7 @@ import csv
 import json
 import re
 import sqlite3
+import time
 from pathlib import Path
 import sys
 
@@ -77,6 +78,7 @@ FULLTEXT_MIN_CHUNK_CHARS = 50
 FULLTEXT_MAX_CHUNK_CHARS = 1100
 FULLTEXT_NARRATIVE_POLICY_NAME = "raglab_narrative_core_v1"
 FULLTEXT_NARRATIVE_POLICY_REVISION = "2026-09-03-qc-excluded-sections-v5"
+MAX_ERROR_LINES_PRINTED = 200
 
 
 def main() -> int:
@@ -136,12 +138,19 @@ def main() -> int:
     for warning in warnings:
         print(f"WARNING: {warning}")
     if errors:
-        for error in errors:
+        for error in errors[:MAX_ERROR_LINES_PRINTED]:
             print(f"ERROR: {error}", file=sys.stderr)
+        if len(errors) > MAX_ERROR_LINES_PRINTED:
+            print(
+                f"ERROR: omitted {len(errors) - MAX_ERROR_LINES_PRINTED} additional validation errors",
+                file=sys.stderr,
+            )
         print(f"Validation failed for step `{args.step}` in {run_dir}", file=sys.stderr)
+        append_validation_log(run_dir, args.step, "failed", errors)
         return 1
 
     mark_step_validation_passed(run_dir, args.step)
+    append_validation_log(run_dir, args.step, "passed", warnings)
     print(f"Validation passed for step `{args.step}` in {run_dir}")
     return 0
 
@@ -166,6 +175,29 @@ def mark_step_validation_passed(run_dir: Path, step_name: str) -> None:
                 (step_name,),
             )
     except sqlite3.Error:
+        return
+
+
+def append_validation_log(
+    run_dir: Path, step_name: str, status: str, details: list[str]
+) -> None:
+    log_path = run_dir / "logs" / "agent_screen_log.md"
+    try:
+        log_path.parent.mkdir(parents=True, exist_ok=True)
+        if not log_path.exists():
+            log_path.write_text("# Agent Screen Log\n\n", encoding="utf-8")
+        timestamp = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
+        if details:
+            detail_text = "\n".join(f"- {detail}" for detail in details[:20])
+        else:
+            detail_text = "- no warnings"
+        with log_path.open("a", encoding="utf-8") as handle:
+            handle.write(
+                f"\n## {timestamp} - validation:{step_name}\n\n"
+                f"Validation {status} for `{step_name}`.\n\n"
+                f"{detail_text}\n\n"
+            )
+    except OSError:
         return
 
 
@@ -975,6 +1007,10 @@ def check_semantic_abstract_review_preflight(
         "evidence_directness",
         "key_relevant_abstract_text",
         "missing_full_text_reason",
+        "reviewer_id",
+        "review_method",
+        "reviewer_model_or_agent",
+        "reviewed_at",
     }
     if first_pass_rows:
         actual_fields = set(first_pass_rows[0].keys())
@@ -1144,7 +1180,7 @@ def check_semantic_abstract_review_pilot(run_dir: Path, errors: list[str]) -> No
         "unknown",
     }
     for reviewed_path in reviewed_paths:
-        input_path = review_dir / "batches" / reviewed_path.name
+        input_path = run_dir / SEMANTIC_BATCH_DIR / reviewed_path.name
         if not input_path.exists():
             errors.append(f"reviewed pilot batch has no matching input batch: {reviewed_path.name}")
             continue
@@ -1182,10 +1218,15 @@ def check_semantic_abstract_review_pilot(run_dir: Path, errors: list[str]) -> No
                 "first_pass_rationale",
                 "key_relevant_abstract_text",
                 "missing_full_text_reason",
+                "reviewer_id",
+                "review_method",
+                "reviewer_model_or_agent",
+                "reviewed_at",
             ):
                 value = row.get(field, "").strip()
                 if not value or value in {"unknown", "not_reviewed"}:
                     errors.append(f"{field} is not filled on {row_label}")
+            check_llm_review_provenance(row, row_label, errors)
 
 
 def check_semantic_abstract_review_complete(run_dir: Path, errors: list[str]) -> None:
@@ -1227,6 +1268,11 @@ def check_semantic_abstract_review_complete(run_dir: Path, errors: list[str]) ->
             errors.append(f"{row.get('batch_id', 'unknown')} is not review_complete")
         if not row.get("output_path"):
             errors.append(f"{row.get('batch_id', 'unknown')} missing output_path")
+        assigned_worker = row.get("assigned_worker", "").strip().lower()
+        if assigned_worker in {"", "unassigned", "unknown", "batch_worker", "heuristic", "script"}:
+            errors.append(
+                f"{row.get('batch_id', 'unknown')} missing explicit LLM assigned_worker"
+            )
 
     allowed_decisions = {
         "include_primary",
@@ -1302,10 +1348,15 @@ def check_semantic_abstract_review_complete(run_dir: Path, errors: list[str]) ->
                 "first_pass_rationale",
                 "key_relevant_abstract_text",
                 "missing_full_text_reason",
+                "reviewer_id",
+                "review_method",
+                "reviewer_model_or_agent",
+                "reviewed_at",
             ):
                 value = row.get(field, "").strip()
                 if not value or value in {"unknown", "not_reviewed"}:
                     errors.append(f"{field} is not filled on {row_label}")
+            check_llm_review_provenance(row, row_label, errors)
 
     try:
         with sqlite3.connect(sqlite_path) as connection:
@@ -1447,6 +1498,22 @@ def check_primary_evidence_threshold(
         )
     if row.get("evidence_directness") in {"background_review", "not_evidence", "unknown"}:
         errors.append(f"include_primary has non-primary evidence_directness on {row_label}")
+
+
+def check_llm_review_provenance(
+    row: dict[str, str], row_label: str, errors: list[str]
+) -> None:
+    if row.get("review_method", "").strip() != "llm_semantic_reading":
+        errors.append(
+            f"review_method on {row_label} must be `llm_semantic_reading`; "
+            "heuristic or script-filled abstract review is not accepted"
+        )
+    reviewer_id = row.get("reviewer_id", "").strip().lower()
+    if reviewer_id in {"", "unknown", "not_reviewed", "heuristic", "script", "regex", "keyword_filter"}:
+        errors.append(f"reviewer_id on {row_label} does not identify an LLM worker")
+    reviewer_model = row.get("reviewer_model_or_agent", "").strip().lower()
+    if reviewer_model in {"", "unknown", "not_reviewed", "heuristic", "script", "regex", "keyword_filter"}:
+        errors.append(f"reviewer_model_or_agent on {row_label} does not identify an LLM worker")
 
 
 def check_primary_full_text_ingestion(run_dir: Path, errors: list[str]) -> None:
