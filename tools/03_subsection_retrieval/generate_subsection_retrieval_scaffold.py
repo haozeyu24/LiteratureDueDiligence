@@ -424,44 +424,48 @@ def write_controller_policy(path: Path) -> None:
 ## Purpose
 
 The controller runs subsection-level PubMed retrieval loops from the initial
-review draft. It accepts, revises, broadens, or manually routes queries based on
-result counts, sampled precision, noise classes, and draft-citation recall.
+review draft. It accepts, revises, broadens, or narrows queries based on result
+counts, sampled precision, noise classes, and draft-citation recall.
 
-## Query Count Heuristics
+## Query Design And Count Heuristics
 
-- `0`: too few unless the subsection is explicitly speculative.
-- `1-4`: usually too narrow unless recovered draft anchors make the subsection complete.
-- `5-100`: target band for semantic abstract review.
-- `101-110`: near-boundary counts are acceptable when the query is semantically
-  specific.
-- `>110`: too many; collect at most a diagnostic sample, redesign query keywords,
-  and use the redesigned acceptable-count queries for abstract-review coverage.
+Each subsection should have one or two initial semantic PubMed queries. Use one
+query when the subsection has a single coherent evidence target. Use two only
+when the second query has a distinct scientific intent, such as mechanism plus
+clinical context, primary mechanism plus citation recall, model/assay plus
+therapy setting, or positive evidence plus negative/failed-result evidence.
+
+Judge readiness at subsection level. The target candidate set is 10-300 unique
+PubMed records per subsection.
+
+- `0-9`: too few; broaden or replace the weakest unresolved leaf query.
+- `10-300`: reviewable for semantic abstract review.
+- `>300`: too many; tighten or replace the broadest contributing leaf query.
 
 Diagnostic samples from overbroad queries are not retrieval coverage. They can
 be used to diagnose noise and choose tighter keyword combinations, but they
 must not be the only source passed into semantic abstract review.
 
-Redesigned queries are not automatically executable keyword rewrites. Query
-counts are evaluated at the query level. When an individual query returns too
-many or too few records, the controller must create redesign work orders and an
-LLM query designer must semantically read the subsection evidence need plus the
-count failure before marking redesigned queries as executable.
+Redesigned queries are not automatically executable keyword rewrites.
+Query-level counts are diagnostics. When the subsection candidate set is too
+sparse or too broad, the controller stages one redesign work order for the
+weakest or broadest unresolved leaf query. An LLM query designer must
+semantically read the subsection evidence need plus the count failure before
+marking redesigned queries as executable.
 
-Do not redesign acceptable-count queries. Once a query has an acceptable count,
-freeze that row and preserve its PubMed count, diagnostics, and candidate
-source contribution. Later iterations should execute only newly
-LLM-redesigned rows or rows that do not yet have a recorded count.
+Continue redesign loops without human review until the subsection candidate set
+is 10-300 and all executable redesign rows have been run.
 
-`subsection_metrics.csv` `controller_status` is the durable rollup of
-query-level decisions: use `query_revision_needed` when any query in the
-subsection still has unresolved redesign work,
-`abstract_review_needed` when query-level work is resolved and candidates are
-ready for abstract review.
+`subsection_metrics.csv` `controller_status` is the durable rollup: use
+`query_revision_needed` when the subsection is outside 10-300 or has pending
+redesign rows, and `abstract_review_needed` when candidates are ready for
+semantic abstract review.
 
 ## Controller Actions
 
 - `accept_for_abstract_review`
 - `redesign_query_keywords`
+- `diagnostic_only_subsection_covered`
 - `recover_draft_citation`
 - `finalize_subsection_set`
 
@@ -471,10 +475,10 @@ Finalize a subsection only after query iterations, abstract-review decisions,
 draft-citation recall, and full-text routing are recorded. Placeholder or
 `not_run` records are allowed only to show that the controller scaffold exists;
 they do not establish that PubMed retrieval or abstract review is scientifically
-complete. Any query with too many or too few hits must point to one or more
-redesigned keyword queries in the iteration log. The redesigned query must
-change the keyword strategy through semantic LLM redesign, not merely raise
-collection limits or take a larger subset from the original result count.
+complete. Any subsection outside the 10-300 candidate range must continue to a
+semantic redesign row. The redesigned query must change the keyword strategy
+through semantic LLM redesign, not merely raise collection limits or take a
+larger subset from the original result count.
 """,
         encoding="utf-8",
     )
@@ -594,7 +598,7 @@ def write_query_plan(path: Path, subsections: list[dict[str, object]]) -> None:
                 "required_terms": ";".join(terms[:4]),
                 "optional_terms": ";".join(terms[4:]),
                 "excluded_terms": "",
-                "expected_result_band": "5-100 target; 101-110 acceptable tolerance",
+                "expected_result_band": "subsection target 10-300 unique candidates",
                 "recall_targets": recall_targets(subsection),
                 "semantic_evidence_need": "needs_llm_semantic_design",
                 "semantic_entity_terms": "needs_llm_semantic_design",
@@ -916,10 +920,10 @@ The scaffold covers {len(subsections)} draft subsections parsed from
 ## Query Plan Compliance
 
 Each subsection has one heuristic `semantic_seed` placeholder row. The LLM query
-designer must replace that placeholder with real initial semantic query intents
-before PubMed execution. The number of queries should be chosen from subsection
-complexity rather than a fixed numeric range. Initial query intent labels must
-be distinct within each subsection.
+designer must replace that placeholder with one or two real initial semantic
+query intents before PubMed execution. Use a second query only when it adds a
+distinct scientific retrieval intent. Initial query intent labels must be
+distinct within each subsection.
 
 ## Abstract Review Rule Compliance
 

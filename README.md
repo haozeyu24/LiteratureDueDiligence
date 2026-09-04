@@ -3,13 +3,14 @@
 A local, agent-run workflow for biomedical and drug-discovery literature
 reviews.
 
-The workflow starts with a broad LLM-generated draft, then treats that draft as
-a map of claims to verify. In V1, the initial drafting stage should use whatever
-agent or model the user is already running; a dedicated frontier-model API call
-is not required for the workflow to operate. Later stages retrieve PubMed
-literature, review abstracts semantically, ingest primary full text, build a RAG
-index, and perform evidence-grounded subsection rewriting from paper packets and
-narrative full text.
+The workflow starts with a broad LLM-generated draft seeded by lightweight
+internet search for obvious scholarly anchors, then treats that draft as a map
+of claims to verify. In V1, the initial drafting stage should use whatever agent
+or model the user is already running; a dedicated frontier-model API call is not
+required for the workflow to operate. Later stages retrieve PubMed literature,
+review abstracts semantically, ingest primary full text, build a RAG index, and
+perform evidence-grounded subsection rewriting from paper packets and narrative
+full text.
 
 This repository is designed for Codex, Claude Code, or similar local agentic
 coding environments. It does not require an end-to-end app or custom hosted
@@ -29,6 +30,9 @@ passing validation gates.
   improve conceptual recall, mechanism breadth, useful citation clues, and
   search-target coverage. This should remain a recommendation for quality, not a
   hard dependency.
+- Lightweight draft search: Stage 2 performs a small internet literature search
+  before drafting so obvious anchor papers can appear in the initial citation
+  registers. This is a recall aid, not the formal PubMed retrieval loop.
 - Correlated model bias: drafting, query construction, rewriting, and
   verification may be done by the same model or model family, so the verifier
   may share the generator's blind spots. This workflow deliberately avoids
@@ -47,7 +51,7 @@ passing validation gates.
 | Stage | Name | Status | Main Output |
 | --- | --- | --- | --- |
 | 1 | Prompt intake | implemented | structured run instruction and config |
-| 2 | Initial review draft | implemented | citation-heavy draft with subsection registers |
+| 2 | Initial review draft | implemented | lightweight search trace plus citation-heavy draft |
 | 3 | Subsection PubMed retrieval | implemented | subsection queries, PubMed metadata, recall metrics |
 | 4 | Semantic abstract review | implemented | primary/context/excluded decisions per subsection |
 | 5 | Primary full-text ingestion | implemented | narrative-core PMC/PDF text, chunks, QC report |

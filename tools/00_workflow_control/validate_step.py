@@ -417,12 +417,17 @@ def check_artifact_folder_layout(
 
 def check_initial_review_draft(run_dir: Path, errors: list[str]) -> None:
     draft_path = run_dir / "drafts/initial_review.md"
+    run_config_path = run_dir / "inputs/run_config.md"
+    search_path = run_dir / "artifacts/01_draft_validation/00_search/initial_draft_literature_search.md"
     check_path = run_dir / "artifacts/01_draft_validation/01_checks/draft_instruction_check.md"
     if not draft_path.exists() or not check_path.exists():
         return
 
     draft = draft_path.read_text(encoding="utf-8")
     check = check_path.read_text(encoding="utf-8")
+    lightweight_search_required = run_config_bool(
+        run_config_path, "initial_draft_lightweight_search_required", default=True
+    )
 
     allowed_access = {
         "full_text_likely_available",
@@ -440,6 +445,7 @@ def check_initial_review_draft(run_dir: Path, errors: list[str]) -> None:
     }
     allowed_provenance = {
         "searched_pubmed",
+        "searched_web",
         "searched_full_text",
         "local_prior_run",
         "llm_memory",
@@ -451,6 +457,32 @@ def check_initial_review_draft(run_dir: Path, errors: list[str]) -> None:
     min_rows_per_register = 4
     min_words_per_subsection = 150
     min_paragraphs_per_subsection = 2
+
+    if lightweight_search_required:
+        if not search_path.exists():
+            errors.append(
+                "missing required file: "
+                "artifacts/01_draft_validation/00_search/initial_draft_literature_search.md"
+            )
+            search_trace = ""
+        else:
+            search_trace = search_path.read_text(encoding="utf-8")
+        required_search_markers = [
+            "# Initial Draft Literature Search",
+            "## Search Scope",
+            "## Search Log",
+            "## Candidate Citation Anchors",
+            "## Search Limitations",
+        ]
+        for marker in required_search_markers:
+            if marker not in search_trace:
+                errors.append(f"initial_draft_literature_search.md missing marker: {marker}")
+        search_urls = re.findall(r"https?://\S+", search_trace)
+        if len(search_urls) < 3:
+            errors.append(
+                "initial_draft_literature_search.md has fewer than 3 URLs; "
+                "expected traceable lightweight search anchors"
+            )
 
     chapter_count = sum(
         1 for line in draft.splitlines() if line.startswith("## Chapter ")
@@ -514,6 +546,12 @@ def check_initial_review_draft(run_dir: Path, errors: list[str]) -> None:
             errors.append(
                 f"invalid discovery_provenance on line {line_number}: {discovery_provenance}"
             )
+
+    searched_rows = re.findall(r"\|[^\n]*\|\s*(?:searched_web|searched_pubmed)\s*\|", draft)
+    if lightweight_search_required and not searched_rows:
+        errors.append(
+            "initial_review.md has no citation-register rows with searched_web or searched_pubmed provenance"
+        )
 
     if "## Overall Status" in check and "- `fail`" in check:
         errors.append("draft instruction check reports `fail`")
@@ -715,6 +753,10 @@ def check_subsection_retrieval(
             errors.append(
                 f"{subsection_id} has no initial semantic query rows"
             )
+        if query_count > 2:
+            errors.append(
+                f"{subsection_id} has {query_count} initial semantic query rows; expected at most 2"
+            )
         query_types = [row.get("query_type", "").strip() for row in initial_rows]
         if any(query_type == "semantic_seed" for query_type in query_types):
             errors.append(f"{subsection_id} still has scaffold-only semantic_seed query rows")
@@ -743,6 +785,15 @@ def check_subsection_retrieval(
         row.get("subsection_id", ""): row.get("controller_status", "")
         for row in metrics_rows
     }
+    candidate_count_by_subsection: dict[str, int] = {}
+    for row in metrics_rows:
+        subsection_id = row.get("subsection_id", "")
+        try:
+            candidate_count_by_subsection[subsection_id] = int(
+                row.get("total_collected_for_review", "0")
+            )
+        except ValueError:
+            candidate_count_by_subsection[subsection_id] = -1
     for row in iteration_rows:
         count_status = row.get("count_status", "")
         query_id = row.get("query_id", "")
@@ -753,14 +804,36 @@ def check_subsection_retrieval(
             if value.strip() and value.strip() != "controller_to_assign"
         ]
         if count_status == "acceptable" and next_query_ids_for_row:
-            errors.append(
-                f"{query_id} has acceptable count_status but points to redesigned queries"
-            )
+            candidate_count = candidate_count_by_subsection.get(subsection_id, -1)
+            if not (
+                controller_status_by_subsection.get(subsection_id) == "query_revision_needed"
+                and candidate_count > 300
+            ):
+                errors.append(
+                    f"{query_id} has acceptable count_status but points to redesigned queries"
+                )
         if count_status not in {"too_many", "too_few"}:
+            continue
+        if controller_status_by_subsection.get(subsection_id) == "abstract_review_needed":
+            if count_status == "too_many":
+                diagnostic = next(
+                    (
+                        diagnostic_row
+                        for diagnostic_row in diagnostic_rows
+                        if diagnostic_row.get("query_id") == query_id
+                    ),
+                    {},
+                )
+                if diagnostic and diagnostic.get("sample_strategy") != "diagnostic_sample_only":
+                    errors.append(
+                        f"{query_id} has too_many count_status but sample_strategy is not diagnostic_sample_only"
+                    )
             continue
         parent_query = query_rows_by_id.get(query_id, {})
         next_query_ids = next_query_ids_for_row
         if not next_query_ids:
+            if redesign_batch_has_acceptable_sibling(row, iteration_rows, query_rows_by_id):
+                continue
             errors.append(
                 f"{query_id} has {count_status} count_status but does not point to a redesigned query"
             )
@@ -857,6 +930,26 @@ def check_subsection_retrieval(
             errors.append(
                 f"{subsection_id} has {unexecuted_query_count} designed query rows without execution records"
             )
+        try:
+            candidate_count = int(row.get("total_collected_for_review", "0"))
+        except ValueError:
+            candidate_count = -1
+            errors.append(
+                f"{subsection_id} total_collected_for_review must be an integer: "
+                f"{row.get('total_collected_for_review', '')}"
+            )
+        if status == "abstract_review_needed" and not (10 <= candidate_count <= 300):
+            errors.append(
+                f"{subsection_id} has controller_status=abstract_review_needed but "
+                f"total_collected_for_review={candidate_count}; expected 10-300"
+            )
+        if status == "query_revision_needed" and 10 <= candidate_count <= 300 and not (
+            pending_redesign_count or unexecuted_query_count
+        ):
+            errors.append(
+                f"{subsection_id} has reviewable subsection candidate count "
+                f"{candidate_count} but controller_status=query_revision_needed"
+            )
         bad_query_rows = [
             row_item
             for row_item in iteration_rows
@@ -867,8 +960,16 @@ def check_subsection_retrieval(
             row_item
             for row_item in bad_query_rows
             if not row_item.get("next_query_id", "").strip()
+            and not redesign_batch_has_acceptable_sibling(
+                row_item, iteration_rows, query_rows_by_id
+            )
         ]
-        if (pending_redesign_count or unexecuted_query_count or unresolved_bad_query_rows) and status != "query_revision_needed":
+        subsection_count_out_of_range = candidate_count < 10 or candidate_count > 300
+        if (
+            pending_redesign_count
+            or unexecuted_query_count
+            or (unresolved_bad_query_rows and subsection_count_out_of_range)
+        ) and status != "query_revision_needed":
             errors.append(
                 f"{subsection_id} has bad-count query work but controller_status={status}"
             )
@@ -960,6 +1061,23 @@ def read_csv_rows(path: Path, errors: list[str]) -> list[dict[str, str]]:
         return []
 
 
+def run_config_bool(path: Path, key: str, default: bool) -> bool:
+    if not path.exists():
+        return default
+    pattern = re.compile(rf"^\s*-\s*`{re.escape(key)}`:\s*`([^`]+)`")
+    for line in path.read_text(encoding="utf-8").splitlines():
+        match = pattern.match(line)
+        if not match:
+            continue
+        value = match.group(1).strip().lower()
+        if value == "true":
+            return True
+        if value == "false":
+            return False
+        return default
+    return default
+
+
 def query_keyword_set(query: str) -> set[str]:
     keywords: set[str] = set()
     for token in re.findall(
@@ -971,6 +1089,28 @@ def query_keyword_set(query: str) -> set[str]:
             continue
         keywords.add(term)
     return keywords
+
+
+def redesign_batch_has_acceptable_sibling(
+    iteration_row: dict[str, str],
+    iteration_rows: list[dict[str, str]],
+    query_rows_by_id: dict[str, dict[str, str]],
+) -> bool:
+    query_id = iteration_row.get("query_id", "").strip()
+    query_row = query_rows_by_id.get(query_id, {})
+    parent_query_id = query_row.get("redesign_parent_query_id", "").strip()
+    if not parent_query_id:
+        return False
+    for sibling_row in iteration_rows:
+        sibling_query_id = sibling_row.get("query_id", "").strip()
+        if sibling_query_id == query_id:
+            continue
+        sibling_query = query_rows_by_id.get(sibling_query_id, {})
+        if sibling_query.get("redesign_parent_query_id", "").strip() != parent_query_id:
+            continue
+        if sibling_row.get("count_status") == "acceptable":
+            return True
+    return False
 
 
 def check_semantic_query_design(query_rows: list[dict[str, str]], errors: list[str]) -> None:

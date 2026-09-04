@@ -34,10 +34,11 @@ NCBI_RATE_LIMIT_SECONDS = 0.34
 USER_AGENT = "LiteratureDueDiligence/0.1 subsection pubmed metadata collector"
 BATCH_SIZE = 100
 TRANSIENT_CURL_EXIT_CODES = {18, 22, 28, 35, 52, 55, 56, 92}
-ACCEPTABLE_MIN_COUNT = 5
-ACCEPTABLE_MAX_COUNT = 110
-MAX_REDESIGNS_PER_QUERY = 3
-MAX_CANDIDATES_PER_SUBSECTION = 600
+ACCEPTABLE_MIN_COUNT = 10
+ACCEPTABLE_MAX_COUNT = 300
+DEFAULT_REDESIGN_WORK_ORDERS_PER_BAD_QUERY = 1
+MIN_CANDIDATES_PER_SUBSECTION = 10
+MAX_CANDIDATES_PER_SUBSECTION = 300
 
 
 def main() -> int:
@@ -126,12 +127,14 @@ def main() -> int:
     write_pubmed_record_index(run_dir / PUBMED_DIR / "pubmed_record_index.csv", records)
     write_query_diagnostics(run_dir / QUERY_DIR / "query_diagnostics.csv", result_query_rows, query_results)
     write_iteration_log(run_dir / QUERY_DIR / "search_iteration_log.csv", result_query_rows, query_results)
-    write_triage_tables(run_dir / SCREENING_DIR, query_results, records_by_pmid)
+    write_triage_tables(run_dir / SCREENING_DIR, query_rows, query_results, records_by_pmid)
     write_recall_check(run_dir / RECALL_DIR / "draft_citation_recall_check.csv", records_by_pmid)
     write_final_literature_sets(
-        run_dir / OUTPUT_DIR / "final_literature_sets.csv", query_results, records_by_pmid
+        run_dir / OUTPUT_DIR / "final_literature_sets.csv", query_rows, query_results, records_by_pmid
     )
-    write_full_text_queue(run_dir / OUTPUT_DIR / "full_text_download_queue.csv", query_results, records_by_pmid)
+    write_full_text_queue(
+        run_dir / OUTPUT_DIR / "full_text_download_queue.csv", query_rows, query_results, records_by_pmid
+    )
     write_metrics(run_dir / ARTIFACT_DIR, query_rows, query_results)
     write_report(
         run_dir / QUERY_DIR / "query_execution_report.md",
@@ -250,28 +253,97 @@ def stage_redesign_rows_for_bad_query_counts(
     existing_query_ids: set[str],
 ) -> list[dict[str, str]]:
     staged: list[dict[str, str]] = []
+    candidates_by_subsection = query_ids_by_subsection(query_results, query_rows)
+    rows_by_subsection: dict[str, list[dict[str, str]]] = {}
     for row in query_rows:
+        rows_by_subsection.setdefault(row.get("subsection_id", "").strip(), []).append(row)
+    for subsection_id, subsection_rows in rows_by_subsection.items():
+        candidate_count = len(candidates_by_subsection.get(subsection_id, {}))
+        if subsection_candidate_count_is_reviewable(candidate_count):
+            continue
+        redesign_candidates = rows_for_subsection_redesign(
+            subsection_rows, query_results, candidate_count
+        )
+        for row in redesign_candidates:
+            query_id = row.get("query_id", "").strip()
+            result = query_results.get(query_id)
+            if not result:
+                continue
+            if child_query_ids(query_rows, query_id):
+                continue
+            if redesign_batch_has_acceptable_sibling(row, query_rows, query_results):
+                continue
+            forced_status = row_redesign_trigger_status(
+                row, query_results, candidate_count
+            )
+            redesigned_rows = [
+                redesigned
+                for redesigned in redesign_queries_for_count(
+                    row, int(result["raw_count"]), forced_status=forced_status
+                )
+                if redesigned["query_id"] not in existing_query_ids
+            ]
+            for redesigned in redesigned_rows:
+                existing_query_ids.add(redesigned["query_id"])
+            if redesigned_rows:
+                result["next_query_ids"] = result.get("next_query_ids", []) + [
+                    redesigned["query_id"] for redesigned in redesigned_rows
+                ]
+            staged.extend(redesigned_rows)
+    return staged
+
+
+def subsection_candidate_count_is_reviewable(candidate_count: int) -> bool:
+    return MIN_CANDIDATES_PER_SUBSECTION <= candidate_count <= MAX_CANDIDATES_PER_SUBSECTION
+
+
+def subsection_redesign_trigger_status(candidate_count: int) -> str:
+    if candidate_count > MAX_CANDIDATES_PER_SUBSECTION:
+        return "too_many"
+    return "too_few"
+
+
+def row_redesign_trigger_status(
+    row: dict[str, str],
+    query_results: dict[str, dict[str, object]],
+    candidate_count: int,
+) -> str:
+    raw_status = count_status(int(query_results[row["query_id"]]["raw_count"]))
+    if raw_status in {"too_many", "too_few"}:
+        return raw_status
+    return subsection_redesign_trigger_status(candidate_count)
+
+
+def rows_for_subsection_redesign(
+    subsection_rows: list[dict[str, str]],
+    query_results: dict[str, dict[str, object]],
+    candidate_count: int,
+) -> list[dict[str, str]]:
+    executed_leaf_rows = []
+    for row in subsection_rows:
         query_id = row.get("query_id", "").strip()
         result = query_results.get(query_id)
         if not result:
             continue
-        if count_status(int(result["raw_count"])) == "acceptable":
+        if child_query_ids(subsection_rows, query_id):
             continue
-        if child_query_ids(query_rows, query_id):
+        if row.get("semantic_query_design_status") == "needs_llm_semantic_redesign":
             continue
-        redesigned_rows = [
-            redesigned
-            for redesigned in redesign_queries_for_count(row, int(result["raw_count"]))
-            if redesigned["query_id"] not in existing_query_ids
+        executed_leaf_rows.append(row)
+    if candidate_count < MIN_CANDIDATES_PER_SUBSECTION:
+        sparse_rows = [
+            row
+            for row in executed_leaf_rows
+            if count_status(int(query_results[row["query_id"]]["raw_count"])) == "too_few"
         ]
-        for redesigned in redesigned_rows:
-            existing_query_ids.add(redesigned["query_id"])
-        if redesigned_rows:
-            result["next_query_ids"] = result.get("next_query_ids", []) + [
-                redesigned["query_id"] for redesigned in redesigned_rows
-            ]
-        staged.extend(redesigned_rows)
-    return staged
+        return sparse_rows or executed_leaf_rows
+    if candidate_count > MAX_CANDIDATES_PER_SUBSECTION:
+        return sorted(
+            executed_leaf_rows,
+            key=lambda row: int(query_results[row["query_id"]]["raw_count"]),
+            reverse=True,
+        )[:1]
+    return []
 
 
 def child_query_ids(query_rows: list[dict[str, str]], parent_query_id: str) -> list[str]:
@@ -280,6 +352,24 @@ def child_query_ids(query_rows: list[dict[str, str]], parent_query_id: str) -> l
         for candidate in query_rows
         if candidate.get("redesign_parent_query_id", "").strip() == parent_query_id
     ]
+
+
+def redesign_batch_has_acceptable_sibling(
+    row: dict[str, str],
+    query_rows: list[dict[str, str]],
+    query_results: dict[str, dict[str, object]],
+) -> bool:
+    parent_query_id = row.get("redesign_parent_query_id", "").strip()
+    if not parent_query_id:
+        return False
+    for candidate in query_rows:
+        if candidate.get("redesign_parent_query_id", "").strip() != parent_query_id:
+            continue
+        candidate_id = candidate.get("query_id", "").strip()
+        result = query_results.get(candidate_id)
+        if result and count_status(int(result["raw_count"])) == "acceptable":
+            return True
+    return False
 
 
 def write_csv(path: Path, rows: list[dict[str, object]], fieldnames: list[str] | None = None) -> None:
@@ -576,8 +666,10 @@ def controller_action(raw_count: int) -> str:
     return "redesign_query_keywords"
 
 
-def redesign_queries_for_count(row: dict[str, str], raw_count: int) -> list[dict[str, str]]:
-    status = count_status(raw_count)
+def redesign_queries_for_count(
+    row: dict[str, str], raw_count: int, forced_status: str | None = None
+) -> list[dict[str, str]]:
+    status = forced_status or count_status(raw_count)
     if status == "acceptable":
         return []
     terms = query_terms(row)
@@ -602,7 +694,7 @@ def redesign_queries_for_count(row: dict[str, str], raw_count: int) -> list[dict
         )
         expected = f"{ACCEPTABLE_MIN_COUNT}-{ACCEPTABLE_MAX_COUNT}"
     rows = []
-    for offset, query in enumerate(queries[:MAX_REDESIGNS_PER_QUERY], start=1):
+    for offset, query in enumerate(queries[:DEFAULT_REDESIGN_WORK_ORDERS_PER_BAD_QUERY], start=1):
         rows.append(
             {
                 "subsection_id": row["subsection_id"],
@@ -755,7 +847,7 @@ def tightened_queries(terms: list[str]) -> list[str]:
             query = and_join([quote_term(entity), quote_term(concept)])
             if query and query not in queries:
                 queries.append(query)
-    if len(queries) < MAX_REDESIGNS_PER_QUERY:
+    if len(queries) < DEFAULT_REDESIGN_WORK_ORDERS_PER_BAD_QUERY:
         for entity in entities[:2]:
             focus = [term for term in concepts if term != entity][:2]
             query = and_join([quote_term(entity), *[quote_term(term) for term in focus]])
@@ -867,16 +959,7 @@ def subsection_controller_status(
         return "query_revision_needed"
     if any(row.get("query_id", "").strip() not in query_results for row in rows):
         return "query_revision_needed"
-    if any(
-        row.get("query_id", "").strip() in query_results
-        and count_status(int(query_results[row["query_id"]]["raw_count"])) != "acceptable"
-        and not child_query_ids(query_rows, row.get("query_id", "").strip())
-        for row in rows
-    ):
-        return "query_revision_needed"
-    if candidate_count == 0:
-        return "query_revision_needed"
-    if candidate_count <= MAX_CANDIDATES_PER_SUBSECTION:
+    if subsection_candidate_count_is_reviewable(candidate_count):
         return "abstract_review_needed"
     return "query_revision_needed"
 
@@ -966,7 +1049,7 @@ def recall_signals(row: dict[str, str], pmids: set[str]) -> str:
 
 def revision_rationale(raw_count: int, collected: int) -> str:
     if raw_count == 0:
-        return "No PubMed records returned; controller should broaden terms or use manual lookup."
+        return "No PubMed records returned; controller should semantically broaden or redesign terms."
     if raw_count < ACCEPTABLE_MIN_COUNT:
         return "Sparse result count; controller should broaden unless known draft anchors are recovered."
     if raw_count <= ACCEPTABLE_MAX_COUNT:
@@ -988,42 +1071,79 @@ def write_iteration_log(
     path: Path, query_rows: list[dict[str, str]], query_results: dict[str, dict[str, object]]
 ) -> None:
     rows = []
+    candidates_by_subsection = query_ids_by_subsection(query_results, query_rows)
     for row in query_rows:
         raw_count = int(query_results[row["query_id"]]["raw_count"])
+        subsection_id = row["subsection_id"]
+        candidate_count = len(candidates_by_subsection.get(subsection_id, {}))
         rows.append(
             {
-                "subsection_id": row["subsection_id"],
+                "subsection_id": subsection_id,
                 "query_id": row["query_id"],
                 "iteration": "1",
                 "run_status": "run",
                 "result_count": str(raw_count),
                 "count_status": count_status(raw_count),
-                "controller_action": iteration_controller_action(row, query_results),
+                "controller_action": iteration_controller_action(
+                    row, query_results, candidate_count
+                ),
                 "next_query_id": ";".join(query_results[row["query_id"]].get("next_query_ids", [])),
-                "notes": revision_rationale(raw_count, len(query_results[row["query_id"]]["pmids"])),
+                "notes": iteration_notes(
+                    raw_count,
+                    len(query_results[row["query_id"]]["pmids"]),
+                    candidate_count,
+                ),
             }
         )
     write_csv(path, rows)
 
 
 def iteration_controller_action(
-    row: dict[str, str], query_results: dict[str, dict[str, object]]
+    row: dict[str, str],
+    query_results: dict[str, dict[str, object]],
+    subsection_candidate_count: int,
 ) -> str:
     query_id = row.get("query_id", "").strip()
     result = query_results.get(query_id)
     if not result:
         return "run_query_or_estimate_count"
+    if subsection_candidate_count_is_reviewable(subsection_candidate_count):
+        if count_status(int(result["raw_count"])) == "too_many":
+            return "diagnostic_only_subsection_covered"
+        return "accept_for_abstract_review"
     status = count_status(int(result["raw_count"]))
     if status == "acceptable":
-        return "accept_for_abstract_review"
+        return "accept_for_abstract_review_pending_subsection_balance"
     if result.get("next_query_ids"):
         return "redesign_query_keywords"
+    if redesign_batch_has_acceptable_sibling(row, [result["row"] for result in query_results.values()], query_results):
+        return "resolved_by_acceptable_redesign_sibling"
     return "redesign_query_keywords"
 
 
-def query_ids_by_subsection(query_results: dict[str, dict[str, object]]) -> dict[str, dict[str, set[str]]]:
+def iteration_notes(raw_count: int, collected: int, subsection_candidate_count: int) -> str:
+    base = revision_rationale(raw_count, collected)
+    return (
+        f"{base} Subsection unique candidate count is {subsection_candidate_count}; "
+        f"target range is {MIN_CANDIDATES_PER_SUBSECTION}-{MAX_CANDIDATES_PER_SUBSECTION}."
+    )
+
+
+def query_ids_by_subsection(
+    query_results: dict[str, dict[str, object]],
+    query_rows: list[dict[str, str]] | None = None,
+) -> dict[str, dict[str, set[str]]]:
     by_subsection: dict[str, dict[str, set[str]]] = {}
+    superseded_query_ids = set()
+    if query_rows is not None:
+        superseded_query_ids = {
+            row.get("redesign_parent_query_id", "").strip()
+            for row in query_rows
+            if row.get("redesign_parent_query_id", "").strip()
+        }
     for query_id, result in query_results.items():
+        if query_id in superseded_query_ids:
+            continue
         if count_status(int(result["raw_count"])) == "too_many":
             continue
         subsection_id = str(result["row"]["subsection_id"])
@@ -1033,10 +1153,12 @@ def query_ids_by_subsection(query_results: dict[str, dict[str, object]]) -> dict
 
 
 def candidate_rows(
-    query_results: dict[str, dict[str, object]], records_by_pmid: dict[str, dict[str, object]]
+    query_rows: list[dict[str, str]],
+    query_results: dict[str, dict[str, object]],
+    records_by_pmid: dict[str, dict[str, object]],
 ) -> list[dict[str, str]]:
     rows = []
-    for subsection_id, pmid_map in query_ids_by_subsection(query_results).items():
+    for subsection_id, pmid_map in query_ids_by_subsection(query_results, query_rows).items():
         for pmid, query_ids in sorted(pmid_map.items()):
             record = records_by_pmid.get(pmid)
             if not record:
@@ -1063,10 +1185,11 @@ def candidate_rows(
 
 def write_triage_tables(
     artifact_dir: Path,
+    query_rows: list[dict[str, str]],
     query_results: dict[str, dict[str, object]],
     records_by_pmid: dict[str, dict[str, object]],
 ) -> None:
-    base_rows = candidate_rows(query_results, records_by_pmid)
+    base_rows = candidate_rows(query_rows, query_results, records_by_pmid)
     first_rows = []
     rescue_rows = []
     for row in base_rows:
@@ -1206,7 +1329,7 @@ def write_recall_check(path: Path, records_by_pmid: dict[str, dict[str, object]]
                 **row,
                 "found_in_final_set": "yes" if found else "no",
                 "controller_decision": "recovered" if found else "recover_with_targeted_query",
-                "notes": "Recovered in PubMed candidate set." if found else "Not recovered by current query set; needs targeted query or manual lookup.",
+                "notes": "Recovered in PubMed candidate set." if found else "Not recovered by current query set; needs targeted semantic query redesign.",
             }
         )
     if not rows:
@@ -1242,11 +1365,12 @@ def write_recall_check(path: Path, records_by_pmid: dict[str, dict[str, object]]
 
 def write_final_literature_sets(
     path: Path,
+    query_rows: list[dict[str, str]],
     query_results: dict[str, dict[str, object]],
     records_by_pmid: dict[str, dict[str, object]],
 ) -> None:
     rows = []
-    for row in candidate_rows(query_results, records_by_pmid):
+    for row in candidate_rows(query_rows, query_results, records_by_pmid):
         rows.append(
             {
                 "subsection_id": row["subsection_id"],
@@ -1293,11 +1417,12 @@ def write_final_literature_sets(
 
 def write_full_text_queue(
     path: Path,
+    query_rows: list[dict[str, str]],
     query_results: dict[str, dict[str, object]],
     records_by_pmid: dict[str, dict[str, object]],
 ) -> None:
     rows = []
-    for row in candidate_rows(query_results, records_by_pmid):
+    for row in candidate_rows(query_rows, query_results, records_by_pmid):
         if row["verified_access_status"] == "pmc_available":
             continue
         rows.append(
@@ -1453,11 +1578,11 @@ def write_report(
         "| subsection_id | queries_run | total_raw_hits | unique_candidates | controller_status |",
         "| --- | ---: | ---: | ---: | --- |",
     ]
-    by_sub_candidates = query_ids_by_subsection(query_results)
+    by_sub_candidates = final_record_counts_by_subsection(path)
     for subsection_id, query_ids in sorted(by_sub.items()):
         executed_query_ids = [qid for qid in query_ids if qid in query_results]
         counts = [int(query_results[qid]["raw_count"]) for qid in executed_query_ids]
-        unique = len(by_sub_candidates.get(subsection_id, {}))
+        unique = by_sub_candidates.get(subsection_id, 0)
         status = subsection_controller_status(subsection_id, query_rows, query_results, unique)
         lines.append(
             f"| {subsection_id} | {len(executed_query_ids)} | {sum(counts)} | {unique} | {status} |"
@@ -1476,6 +1601,20 @@ def write_report(
         ]
     )
     path.write_text("\n".join(lines) + "\n", encoding="utf-8")
+
+
+def final_record_counts_by_subsection(report_path: Path) -> dict[str, int]:
+    artifact_dir = report_path.parent.parent
+    final_set_path = artifact_dir / "06_outputs" / "final_literature_sets.csv"
+    if not final_set_path.exists():
+        return {}
+    counts: dict[str, set[str]] = {}
+    for row in read_csv(final_set_path):
+        subsection_id = row.get("subsection_id", "").strip()
+        pmid = row.get("PMID", "").strip()
+        if subsection_id and pmid:
+            counts.setdefault(subsection_id, set()).add(pmid)
+    return {subsection_id: len(pmids) for subsection_id, pmids in counts.items()}
 
 
 def update_check(path: Path, unique_record_count: int, pending_redesign_count: int = 0) -> None:
@@ -1662,7 +1801,9 @@ def update_sqlite(
                     now,
                 ),
             )
-        for row in candidate_rows(query_results, {str(record["pmid"]): record for record in records}):
+        for row in candidate_rows(
+            query_rows, query_results, {str(record["pmid"]): record for record in records}
+        ):
             connection.execute(
                 """
                 INSERT INTO subsection_papers(

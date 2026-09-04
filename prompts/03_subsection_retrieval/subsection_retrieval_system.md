@@ -97,10 +97,11 @@ For each subsection, create stringent PubMed queries using:
   allows them.
 
 Replace each scaffolded `semantic_seed` row with real initial query intents,
-choosing the number the subsection semantically needs. A narrow or simple
-subsection may need a small number of queries; complex subsections with
-multiple entities, mechanisms, models, interventions, or citation-recall needs
-may need more.
+choosing one or two queries based on the subsection's semantic needs. Use one
+query when the subsection has a single coherent evidence target. Use two only
+when the second query has a distinct intent, such as mechanism plus clinical
+context, primary mechanism plus citation recall, model/assay plus therapeutic
+setting, or positive evidence plus negative/failed-result evidence.
 
 The subsection title is an orientation signal only. Query construction must be
 driven primarily by subsection prose, citation-register notes, and citation
@@ -121,23 +122,23 @@ Optional query types:
 - `combination_rationale`
 - `biomarker_context`
 
-## Count-Based Query Control
+## Subsection-Level Query Control
 
-After a query is run or estimated, classify result count as:
+After a query is run or estimated, classify result count as a diagnostic signal:
 
 - `too_many`
 - `acceptable`
 - `too_few`
 
-Default per-query count heuristics:
+The controller judges readiness at subsection level. The durable target is
+10-300 unique PubMed candidates for each subsection.
 
-- `0`: usually too few.
-- `1-4`: usually too narrow unless key draft citations are recovered and the
-  subsection is intrinsically sparse.
-- `5-100`: target band for LLM semantic abstract review.
-- `101-110`: acceptable tolerance when the query is semantically specific.
-- `>110`: too many; collect only a diagnostic sample and redesign the query
-  keywords before using that query as retrieval coverage.
+- `0-9`: too few; semantically broaden or replace the weakest unresolved leaf
+  query unless the subsection is explicitly sparse and citation anchors were
+  recovered.
+- `10-300`: reviewable candidate set for LLM semantic abstract review.
+- `>300`: too many; semantically tighten or replace the broadest contributing
+  leaf query before abstract review.
 
 When result count is too high, refine by mechanism, assay, therapy, disease,
 population, molecular alteration, endpoint, or exact phrase. Do not refine
@@ -148,14 +149,19 @@ When result count is too low, semantically redesign the query by broadening
 synonyms, removing excessive filters, or using related family members when
 allowed.
 
+Stage one redesigned query for the selected subsection-level failure by
+default. Continue semantic redesign loops without human review until
+`subsection_metrics.csv` reports `abstract_review_needed`.
+
 For each query, write diagnostics with raw hit count, collected count, sampled
 precision when sampled, dominant noise classes, missing concepts, recall
 signals, decision, and revision rationale.
 
 If a query returns more records than can reasonably be staged for abstract
 review, record the full raw hit count, collect a clearly labeled top-relevance
-metadata sample, mark `truncated_by_constraint`, and require controller query
-revision before finalization.
+metadata sample, mark `truncated_by_constraint`, and treat the sample as
+diagnostic unless the subsection-level candidate set is already reviewable from
+specific retrieval queries.
 
 For each subsection, maintain a metrics row recording returned PubMed counts,
 collected-for-review counts, draft-citation recall numerator/denominator/rate,

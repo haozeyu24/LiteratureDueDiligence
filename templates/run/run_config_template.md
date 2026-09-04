@@ -15,6 +15,7 @@
 - `min_paragraphs_per_substantive_subsection`: `2`
 - `min_citation_register_rows_per_subsection`: `4`
 - `citation_discovery_provenance_required`: `true`
+- `initial_draft_lightweight_search_required`: `true`
 - `llm_memory_citations_allowed_with_label`: `true`
 - `citation_gap_policy`: `add_citation_needed_rows_for_missing_evidence`
 - `allow_reviews_as_sources`: `true`
@@ -64,6 +65,9 @@
 - `citation_gap_policy`
   - `add_citation_needed_rows_for_missing_evidence`
   - `only_list_known_citations`
+- `initial_draft_lightweight_search_required`
+  - `true`
+  - `false`
 - `allow_reviews_as_sources`
   - `true`
   - `false`
@@ -86,6 +90,7 @@
 - `venue_blocklist_path`
   - `resources/journal_blocklist.csv`
 - `api_dependency`
+  - `openai_embeddings_required_for_stage_6`
   - `none`
 - `human_final_inspection_required`
   - `true`
@@ -97,6 +102,9 @@
 - The initial draft should be expansive when the user does not specify a paper
   count: broad topic map, many subsections, and multiple citation candidates or
   citation-needed rows per subsection.
+- The initial draft should be seeded by lightweight internet literature search
+  for obvious scholarly anchors. This improves draft recall but does not replace
+  later formal PubMed retrieval.
 - Every substantive subsection should include enough prose to be useful as a
   review draft, not just a heading plus citations. The default minimum is 150
   words and 2 paragraphs before the citation register.

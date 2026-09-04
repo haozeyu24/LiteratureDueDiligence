@@ -10,8 +10,10 @@ Later retrieval agents must verify full text, abstract-only, title-only,
 unavailable, or user-download-needed status.
 
 `discovery_provenance` values distinguish citations found by explicit search
-from citations recalled by the drafting model. Later agents must verify
-`llm_memory`, `unknown`, and `citation_needed` rows before using them as support.
+from citations recalled by the drafting model. `searched_web` rows come from
+the lightweight draft search and remain provisional until later retrieval
+verifies them. Later agents must verify `llm_memory`, `unknown`, and
+`citation_needed` rows before using them as support.
 
 ## Executive Summary
 

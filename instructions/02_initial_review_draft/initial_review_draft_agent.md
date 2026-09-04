@@ -21,6 +21,8 @@ human inspection.
 - `runs/<run_id>/drafts/initial_review.md`
 - `runs/<run_id>/logs/agent_screen_log.md`
 - `runs/<run_id>/artifacts/01_draft_validation/README.md`
+- `runs/<run_id>/artifacts/01_draft_validation/00_search/initial_draft_literature_search.md`
+  when lightweight search is enabled
 - `runs/<run_id>/artifacts/01_draft_validation/01_checks/draft_instruction_check.md`
 
 ## Screen Log
@@ -50,6 +52,36 @@ The draft should be expansive. Unless `run_config.md` says otherwise, aim for:
 The goal is not a skeletal outline. The goal is a broad, readable topic map with
 enough developed prose, citation candidates, and citation-needed targets for
 downstream PubMed retrieval, RAG, and claim verification.
+
+## Lightweight Literature Search
+
+Unless `run_config.md` sets
+`initial_draft_lightweight_search_required=false`, perform a lightweight
+internet search before writing the initial draft for obvious scholarly anchor
+papers, reviews, and preprints relevant to the structured instruction. This is
+not the Stage 3 PubMed retrieval loop: do not build formal subsection PubMed
+query plans, exhaustively screen results, or optimize hit counts here.
+
+Use the search only to improve draft recall and reduce empty citation registers.
+Record the search trace in:
+
+```text
+artifacts/01_draft_validation/00_search/initial_draft_literature_search.md
+```
+
+The search trace must include:
+
+- the topic-level search phrases used
+- the searched resources or search surfaces
+- at least several candidate citation anchors with URLs, titles or citation
+  clues, and why they may matter
+- limitations of the lightweight search and targets left for later PubMed
+  retrieval
+
+Citation rows based on this search must use `discovery_provenance=searched_web`
+unless the agent explicitly searched PubMed or PubMed-result pages during the
+current run, in which case `searched_pubmed` is allowed. Keep uncertain PMIDs and
+DOIs as `unknown`; do not infer metadata from snippets.
 
 Each substantive subsection should develop:
 
@@ -93,6 +125,7 @@ Allowed `venue_trust_label` values:
 Allowed `discovery_provenance` values:
 
 - `searched_pubmed`
+- `searched_web`
 - `searched_full_text`
 - `local_prior_run`
 - `llm_memory`
@@ -116,6 +149,9 @@ metadata; they should describe what later agents need to search for.
 ## Citation Rules
 
 - Do not invent PMIDs, DOIs, titles, authors, trials, or publication metadata.
+- Perform and record the lightweight internet search before drafting when it is
+  enabled in `run_config.md`. Use it to seed obvious citation candidates, not to
+  replace later PubMed retrieval.
 - Do not blur searched literature and LLM memory. A citation recalled from
   memory must be labeled `llm_memory` unless the agent explicitly searched and
   confirmed it during the current run.
@@ -148,6 +184,7 @@ After writing `drafts/initial_review.md`, read
 The check must state whether the draft:
 
 - follows the structured instruction
+- includes a lightweight literature-search trace with URLs before drafting
 - includes citation registers under substantive subsections
 - contains enough chapters, subsections, and citation-register rows to support
   later RAG and verification

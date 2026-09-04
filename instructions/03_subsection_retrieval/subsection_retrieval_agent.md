@@ -106,20 +106,22 @@ and mirror them into SQLite `pubmed_records`. Later abstract review should read
 from these local artifacts rather than re-running PubMed searches unless the
 controller asks for query revision.
 
-If execution stages `query_redesign` rows because a query returns too many or
-too few records, those rows are also semantic LLM design tasks. They must not be
-executed until an LLM reads the subsection evidence need, parent query,
-diagnostic count failure, and false-positive risks, then rewrites or approves
-the row with `semantic_query_design_status=llm_semantic_redesigned`.
+If execution stages `query_redesign` rows because the subsection candidate set
+is too sparse or too broad, those rows are also semantic LLM design tasks. They
+must not be executed until an LLM reads the subsection evidence need, parent
+query, diagnostic count failure, and false-positive risks, then rewrites or
+approves the row with
+`semantic_query_design_status=llm_semantic_redesigned`.
 
 ## Query Plan Rules
 
 For every subsection, replace the scaffolded `semantic_seed` row with real
 initial PubMed queries, choosing the number the subsection semantically needs.
 A narrow or simple subsection may need a small number of queries; complex
-subsections with multiple entities, mechanisms, models, interventions, or
-citation-recall needs may need more. The query designer must read the
-subsection prose and citation-register notes as an evidence need, then identify:
+subsections with a second distinct evidence need may use a second query. Do not
+create more than two initial queries for a subsection. The query designer must
+read the subsection prose and citation-register notes as an evidence need, then
+identify:
 
 - the claim or evidence need being searched;
 - the entity, protein/gene family, intervention, disease, model, or assay
@@ -171,9 +173,9 @@ over long chains of exact entity AND terms when that improves recall.
 
 ## Controller Loop Rules
 
-For each executed query, the controller must classify the query count and decide
-whether that query is acceptable or needs semantic redesign. Query counts are
-evaluated at query level.
+For each executed query, the controller must classify the query count as a
+diagnostic signal. The durable acceptance decision is made at subsection level,
+using the unique candidate count assembled from non-overbroad retrieval queries.
 
 - `too_many`: likely noisy; redesign query keywords by mechanism, context,
   assay, population, intervention, endpoint, or false-positive exclusion.
@@ -182,43 +184,36 @@ evaluated at query level.
   structured instruction.
 - `acceptable`: enough for abstract review without overwhelming the subsection.
 
-Default count guidance for one subsection:
+Default subsection-level count guidance:
 
-- `0`: too few unless the subsection is explicitly speculative.
-- `1-4`: usually too narrow unless draft citations are recovered and the
-  subsection is intrinsically sparse.
-- `5-100`: target band for LLM semantic abstract review.
-- `101-110`: near-boundary counts are acceptable when the query is semantically
-  specific.
-- `>110`: too many; collect at most a diagnostic sample and redesign query
-  keywords before using results for abstract-review coverage.
+- `0-9`: too few; semantically broaden or replace the weakest leaf query unless
+  the subsection is explicitly speculative and citation anchors were recovered.
+- `10-300`: reviewable candidate set for LLM semantic abstract review.
+- `>300`: too many; semantically tighten or replace the broadest contributing
+  leaf query before abstract review.
 
 These are controller heuristics, not scientific inclusion rules.
 Diagnostic samples from overbroad queries are not retrieval coverage and must
 not be the only source passed into semantic abstract review.
 
 Query redesign is an LLM semantic task, not a sampling task and not a mechanical
-keyword shuffle. When an individual query is too sparse or too broad, the
-controller may stage redesign seed rows. The LLM must read the subsection and
-decide which biological meaning should be tightened, broadened, substituted
-with synonyms, moved into OR blocks, moved out of the query, or excluded as a
-false-positive source. Validation must fail if any bad-count query lacks a
-redesign path, or if `controller_status` is inconsistent with unresolved
-redesign work.
+keyword shuffle. When a subsection is too sparse or too broad, the controller
+may stage redesign seed rows for the weakest or broadest unresolved leaf query.
+The LLM must read the subsection and decide which biological meaning should be
+tightened, broadened, substituted with synonyms, moved into OR blocks, moved out
+of the query, or excluded as a false-positive source.
 
-Do not redesign acceptable-count queries. Once a query has an acceptable count,
-freeze that row and preserve its PubMed count, diagnostics, and candidate
-source contribution. Later iterations should execute only newly
-LLM-redesigned rows or rows that do not yet have a recorded count.
+Stage one redesigned query for the selected subsection-level failure by
+default. Continue the redesign loop without human review until the subsection
+candidate count is 10-300 and all executable redesign rows have been run.
 
 Use `subsection_metrics.csv` `controller_status` as the durable rollup of
 query-level decisions:
 
-- `query_revision_needed`: at least one query in the subsection still has
-  unresolved bad-count redesign work, or the subsection-level candidate set is
-  too large.
-- `abstract_review_needed`: every executed query in the subsection is acceptable
-  or has a resolved redesign path, and the candidate set is reviewable.
+- `query_revision_needed`: the subsection candidate set is outside 10-300, or
+  the subsection has pending/unexecuted redesign rows.
+- `abstract_review_needed`: the subsection candidate set is 10-300 and all
+  executable redesign rows have been run.
 
 For every query that is run or estimated, record query diagnostics: raw hit
 count, collected count, whether the result was truncated, sampling strategy,
@@ -311,8 +306,8 @@ allowing hallucinated or off-scope citations to be discarded.
 
 The controller may finalize a subsection literature set only when:
 
-- at least one acceptable query iteration is logged, or the subsection is
-  explicitly marked as needing manual search;
+- `subsection_metrics.csv` shows the subsection candidate set reached 10-300
+  unique records with no pending or unexecuted redesign rows;
 - included papers have abstract-review decisions;
 - known draft citations are recalled, resolved, or explicitly rejected;
 - PMC/full-text availability is recorded when known;

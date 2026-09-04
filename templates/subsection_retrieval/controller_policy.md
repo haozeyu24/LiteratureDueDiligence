@@ -5,22 +5,30 @@
 Define how the controller creates, evaluates, and revises PubMed searches for
 each draft subsection.
 
-## Query Count Heuristics
+## Query Design And Count Heuristics
 
-- `0`: too few unless the subsection is explicitly speculative.
-- `1-4`: usually too narrow unless recovered draft anchors make the subsection complete.
-- `5-100`: target band for LLM semantic abstract review.
-- `101-110`: acceptable tolerance when the query is semantically specific.
-- `>110`: too many; collect at most a diagnostic sample and redesign query keywords before using the query as retrieval coverage.
+Each subsection should have one or two initial semantic queries. Use one query
+when the subsection has a single clear evidence need; use two when a second
+distinct intent is genuinely needed, such as mechanism plus clinical context or
+primary mechanism plus citation recall.
 
-Evaluate counts at query level. Each subsection should have as many initial
-semantic queries as its evidence needs require, with distinct intent labels. Do
-not redesign acceptable-count queries.
+Judge readiness at subsection level. The target candidate set is 10-300 unique
+PubMed records per subsection. Query-level counts are diagnostics that guide
+redesign; they are not independent stop rules. Overbroad query samples are
+diagnostic only unless the subsection-level candidate set is reviewable through
+specific retrieval queries.
+
+When a subsection has fewer than 10 candidates, semantically broaden or replace
+the weakest leaf query. When a subsection has more than 300 candidates,
+semantically tighten or replace the broadest contributing leaf query. The
+controller may continue redesign loops without human review until the subsection
+candidate count is in range and all executable redesign rows have been run.
 
 ## Controller Actions
 
 - `accept_for_abstract_review`
 - `redesign_query_keywords`
+- `diagnostic_only_subsection_covered`
 - `recover_draft_citation`
 - `finalize_subsection_set`
 

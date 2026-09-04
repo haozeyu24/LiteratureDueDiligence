@@ -171,6 +171,13 @@ most recent frontier model API for this stage to improve conceptual recall,
 mechanism breadth, citation clues, and search-target coverage, but V1 must not
 treat that API as a hard dependency.
 
+Unless `run_config.md` disables it, the agent must perform a lightweight
+internet search before drafting for obvious scholarly anchor papers, reviews,
+and preprints relevant to the structured instruction. This is not the formal
+Stage 3 PubMed retrieval loop: do not build subsection PubMed query plans,
+exhaustively screen result sets, or optimize hit counts here. The search is a
+draft-recall aid so the initial citation registers are less likely to be empty.
+
 The draft must be verification-ready, not merely polished prose. Every
 substantive subsection must include a `#### Citation Register` table listing the
 citations used or needed in that subsection, with PMID/DOI fields when known,
@@ -196,9 +203,9 @@ access status.
 
 `discovery_provenance` is also required. It tells downstream agents whether a
 citation was found by explicit PubMed search, found by full-text search, carried
-from an earlier local workflow artifact, recalled from LLM memory, or left as a
-search target. This prevents searched literature from being silently mixed with
-model memory.
+from an earlier local workflow artifact, found through lightweight web search,
+recalled from LLM memory, or left as a search target. This prevents searched
+literature from being silently mixed with model memory.
 
 Allowed draft access labels:
 
@@ -219,6 +226,7 @@ Allowed venue trust labels:
 Allowed discovery provenance labels:
 
 - `searched_pubmed`
+- `searched_web`
 - `searched_full_text`
 - `local_prior_run`
 - `llm_memory`
@@ -233,6 +241,7 @@ Outputs:
 - `drafts/initial_review.md`
 - `logs/agent_screen_log.md`
 - `artifacts/01_draft_validation/README.md`
+- `artifacts/01_draft_validation/00_search/initial_draft_literature_search.md`
 - `artifacts/01_draft_validation/01_checks/draft_instruction_check.md`
 
 Folder organization:
@@ -240,6 +249,9 @@ Folder organization:
 - `artifacts/01_draft_validation/01_checks/`: verifier reports for the initial
   draft. This folder should contain checks only, not retrieval outputs or
   rewritten review content.
+- `artifacts/01_draft_validation/00_search/`: lightweight draft-search trace
+  with search phrases, searched resources, URLs, candidate citation anchors, and
+  known limitations. This is not a formal retrieval artifact.
 
 Validation:
 
@@ -254,15 +266,16 @@ subsection becomes its own controlled PubMed search loop with scientifically
 constrained queries, metadata collection, draft-citation recall checks, and
 full-text routing.
 
-The controller reads each subsection and its citation register, creates at
-least one high-precision query, one mechanism-expansion query, one
-context-expansion query, and one recall-guard query, checks result-count
-quality, downloads PubMed metadata locally, and verifies whether draft
-citations were recovered.
+The controller reads each subsection and its citation register, replaces the
+scaffold with one or two subsection-specific semantic PubMed queries, checks
+subsection-level candidate-set quality, downloads PubMed metadata locally, and
+verifies whether draft citations were recovered. Queries should be specific to
+the subsection's evidence need without overfitting to brittle exact wording.
 
-This step should not download PDFs or build evidence packets yet. It should
-record what is ready for semantic abstract review and what needs query
-revision before abstract review can begin.
+This step should not download PDFs, build evidence packets, or ask for human
+review. It should keep redesigning unresolved subsection searches until each
+subsection has a reviewable candidate set of 10-300 unique PubMed records, then
+record what is ready for semantic abstract review.
 
 Outputs:
 

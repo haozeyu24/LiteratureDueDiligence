@@ -12,6 +12,8 @@ Read:
 
 - `inputs/structured_instruction.md`
 - `inputs/run_config.md`
+- `artifacts/01_draft_validation/00_search/initial_draft_literature_search.md`
+  when lightweight search is enabled
 - `drafts/initial_review.md`
 - `prompts/02_initial_review_draft/initial_review_draft_system.md`
 
@@ -20,6 +22,9 @@ Read:
 Verify that:
 
 - the draft follows the structured instruction's scope
+- when enabled in `run_config.md`, the lightweight internet literature search
+  was performed before drafting and recorded with search phrases, searched
+  resources, URLs, candidate anchors, and limitations
 - the draft contains `## Draft Status`
 - the draft contains an executive summary
 - chapters and subsections are present
@@ -44,6 +49,8 @@ Verify that:
 - `discovery_provenance` values are from the allowed list
 - citations discovered through explicit search are distinguishable from
   citations recalled from LLM memory
+- at least one citation-register row uses searched provenance when lightweight
+  search was enabled and identified a usable scholarly anchor
 - uncertain metadata is marked `unknown` or `citation needed`
 - `draft_access_status` is described or treated as provisional rather than
   verified access
@@ -61,8 +68,9 @@ artifacts/01_draft_validation/01_checks/draft_instruction_check.md
 ```
 
 The README must explain that `01_checks/` stores draft validation reports and
-that this stage must not create retrieval, full-text, claim-verification, or
-rewriting artifacts.
+that `00_search/` stores the lightweight draft-search trace. It must also state
+that this stage must not create formal retrieval, full-text, claim-verification,
+or rewriting artifacts.
 
 Use this structure:
 
@@ -78,6 +86,8 @@ Use this structure:
 ## Structure Compliance
 
 ## Breadth Compliance
+
+## Lightweight Search Compliance
 
 ## Subsection Substance Compliance
 

@@ -206,7 +206,8 @@ def stage5_complete(connection: sqlite3.Connection) -> bool:
         WHERE step_name = 'primary_full_text_ingestion'
         """
     ).fetchone()
-    return bool(row and row["status"] == "complete" and row["validation_status"] == "passed")
+    complete_statuses = {"complete", "complete_with_deferred_user_pdfs"}
+    return bool(row and row["status"] in complete_statuses and row["validation_status"] == "passed")
 
 
 def load_import_rows(run_dir: Path) -> list[dict[str, str]]:

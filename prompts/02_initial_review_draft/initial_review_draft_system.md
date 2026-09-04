@@ -20,6 +20,12 @@ Read:
 
 - Follow the structured instruction closely.
 - Use PubMed-indexed literature as the primary source universe.
+- Unless `run_config.md` sets
+  `initial_draft_lightweight_search_required=false`, perform a lightweight
+  internet search before writing for obvious scholarly anchor papers, reviews,
+  and preprints. This is not the later formal PubMed retrieval loop; do not
+  build subsection query plans, exhaustively screen results, or optimize hit
+  counts here.
 - Include preprints when relevant, but label them clearly.
 - Do not use patents, company websites, regulatory documents, investor
   materials, or general web sources unless the user explicitly requested a
@@ -63,6 +69,35 @@ Citation-register rows may include:
 Do not invent citation metadata to satisfy breadth. If you cannot confidently
 name a paper, create a `citation needed` row with `PMID` and `DOI` set to
 `unknown`, and explain in `notes` what later agents should search for.
+
+## Lightweight Search Trace
+
+When lightweight search is enabled, record the search trace before writing the
+draft in:
+
+```text
+artifacts/01_draft_validation/00_search/initial_draft_literature_search.md
+```
+
+Use this structure:
+
+```markdown
+# Initial Draft Literature Search
+
+## Search Scope
+
+## Search Log
+
+## Candidate Citation Anchors
+
+## Search Limitations
+```
+
+The search trace must list the topic-level search phrases, searched resources or
+search surfaces, candidate citation anchors with URLs and relevance notes, and
+important gaps left for later PubMed retrieval. Use this search to seed the
+initial citation register, but keep Stage 3 responsible for systematic PubMed
+retrieval and recall.
 
 ## Required Draft Structure
 
@@ -151,6 +186,8 @@ Allowed `discovery_provenance` values:
 
 - `searched_pubmed`: found through explicit PubMed or PubMed-result lookup
   during this run
+- `searched_web`: found through lightweight internet literature search during
+  this run, with metadata still provisional unless explicitly verified
 - `searched_full_text`: found by reading or searching paper full text during
   this run
 - `local_prior_run`: inherited from an existing local workflow artifact
