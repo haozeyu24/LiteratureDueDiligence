@@ -89,6 +89,8 @@ FINAL_REVIEW_MACHINE_SCAFFOLD_PATTERNS = [
     r"This review synthesizes verified evidence",
     r"Claim-level verification has not yet been performed",
 ]
+INITIAL_REVIEW_MIN_CHAPTERS = 4
+INITIAL_REVIEW_MIN_SUBSECTIONS = 8
 FULLTEXT_CHUNK_POLICY_NAME = "structure_aware_1000_150"
 FULLTEXT_CHUNK_SIZE_CHARS = 1000
 FULLTEXT_CHUNK_OVERLAP_CHARS = 150
@@ -474,10 +476,17 @@ def check_initial_review_draft(run_dir: Path, errors: list[str]) -> None:
         "unknown",
     }
     header = "| citation_id | citation | PMID | DOI | evidence_role | draft_access_status | venue_trust_label | discovery_provenance | notes |"
-    min_chapters = 6
-    min_rows_per_register = 4
-    min_words_per_subsection = 150
-    min_paragraphs_per_subsection = 2
+    min_chapters = INITIAL_REVIEW_MIN_CHAPTERS
+    min_subsections = INITIAL_REVIEW_MIN_SUBSECTIONS
+    min_rows_per_register = run_config_positive_int(
+        run_config_path, "min_citation_register_rows_per_subsection", default=4
+    )
+    min_words_per_subsection = run_config_positive_int(
+        run_config_path, "min_words_per_substantive_subsection", default=150
+    )
+    min_paragraphs_per_subsection = run_config_positive_int(
+        run_config_path, "min_paragraphs_per_substantive_subsection", default=2
+    )
 
     if lightweight_search_required:
         if not search_path.exists():
@@ -513,11 +522,10 @@ def check_initial_review_draft(run_dir: Path, errors: list[str]) -> None:
     )
     if chapter_count < min_chapters:
         errors.append(f"draft has {chapter_count} chapters; expected at least {min_chapters}")
-    min_subsections = max(min_chapters * 2, chapter_count * 2)
     if subsection_count < min_subsections:
         errors.append(
             f"draft has {subsection_count} subsections; expected at least {min_subsections} "
-            "(at least 2 substantive subsections per chapter)"
+            "(initial review validation floor)"
         )
 
     subsection_blocks = extract_subsection_prose_blocks(draft)
@@ -1097,6 +1105,28 @@ def run_config_bool(path: Path, key: str, default: bool) -> bool:
             return False
         return default
     return default
+
+
+def run_config_value(path: Path, key: str, default: str = "") -> str:
+    if not path.exists():
+        return default
+    pattern = re.compile(rf"^\s*-\s*`{re.escape(key)}`:\s*`([^`]+)`")
+    for line in path.read_text(encoding="utf-8").splitlines():
+        match = pattern.match(line)
+        if match:
+            return match.group(1).strip()
+    return default
+
+
+def run_config_positive_int(path: Path, key: str, default: int) -> int:
+    value = run_config_value(path, key)
+    if not value:
+        return default
+    try:
+        parsed = int(value)
+    except ValueError:
+        return default
+    return parsed if parsed > 0 else default
 
 
 def query_keyword_set(query: str) -> set[str]:

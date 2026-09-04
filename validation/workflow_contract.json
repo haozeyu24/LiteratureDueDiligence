@@ -44,7 +44,6 @@
             "# Run Config",
             "`workflow_mode`",
             "`initial_draft_expansion_policy`: `expansive_topic_map`",
-            "`min_initial_draft_subsections`",
             "`min_words_per_substantive_subsection`",
             "`min_paragraphs_per_substantive_subsection`",
             "`allow_preprints`: `true`",
@@ -127,7 +126,6 @@
             "`primary_discovery_source`: `pubmed`",
             "`initial_draft_lightweight_search_required`",
             "`initial_draft_expansion_policy`: `expansive_topic_map`",
-            "`min_initial_draft_subsections`",
             "`allow_preprints`: `true`",
             "`full_text_policy`: `full_text_preferred_title_abstract_fallback`"
           ]

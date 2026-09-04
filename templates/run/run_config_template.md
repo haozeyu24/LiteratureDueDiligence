@@ -7,10 +7,8 @@
 - `paper_count_policy`: `broad_relevant_coverage_when_unspecified`
 - `paper_count_target`: `as_many_relevant_as_practical_unless_user_specified`
 - `initial_draft_expansion_policy`: `expansive_topic_map`
-- `min_initial_draft_chapters`: `6`
 - `initial_draft_subsection_policy`: `cover_major_entities_mechanisms_evidence_classes_and_clinical_contexts`
-- `target_subsections_per_chapter_when_broad_unspecified`: `2-4`
-- `min_initial_draft_subsections`: `adaptive_minimum_2_per_chapter`
+- `target_subsections_per_chapter_when_broad_unspecified`: `scope_driven_multiple_when_needed`
 - `min_words_per_substantive_subsection`: `150`
 - `min_paragraphs_per_substantive_subsection`: `2`
 - `min_citation_register_rows_per_subsection`: `4`
@@ -51,11 +49,6 @@
 - `initial_draft_expansion_policy`
   - `expansive_topic_map`
   - `compact_scaffold`
-- `min_initial_draft_chapters`
-  - any positive integer
-- `min_initial_draft_subsections`
-  - `adaptive_minimum_2_per_chapter`
-  - any positive integer requested or justified by the run
 - `min_words_per_substantive_subsection`
   - any positive integer
 - `min_paragraphs_per_substantive_subsection`
@@ -100,8 +93,8 @@
 - When the user does not specify paper count, later retrieval should collect as
   many relevant papers as practical for RAG and verification.
 - The initial draft should be expansive when the user does not specify a paper
-  count: broad topic map, many subsections, and multiple citation candidates or
-  citation-needed rows per subsection.
+  count: broad topic map, scope-driven chapters and subsections, and multiple
+  citation candidates or citation-needed rows per subsection.
 - The initial draft should be seeded by lightweight internet literature search
   for obvious scholarly anchors. This improves draft recall but does not replace
   later formal PubMed retrieval.

@@ -36,15 +36,15 @@ generated artifacts.
 
 The draft must be organized into chapters and subsections.
 
-The draft should be expansive. Unless `run_config.md` says otherwise, aim for:
+The draft should be expansive enough for downstream retrieval and verification.
+Use a scope-driven chapter and subsection structure:
 
-- at least 6 chapters
-- enough substantive subsections to separately cover the major entities,
-  mechanisms, evidence classes, and clinical contexts in the structured
-  instruction
-- for broad prompts without a user-specified paper count, roughly 2-4
-  substantive subsections per chapter, with at least 2 substantive subsections
-  per chapter
+- enough substantive chapters and subsections to separately cover the major
+  entities, mechanisms, evidence classes, and clinical contexts in the
+  structured instruction
+- for broad prompts without a user-specified paper count, prefer multiple
+  substantive chapters and subsections over a skeletal outline, without forcing
+  a universal chapter or subsection count
 - at least 150 words of prose per substantive subsection
 - at least 2 prose paragraphs per substantive subsection
 - at least 4 citation-register rows per substantive subsection

@@ -202,14 +202,16 @@ citations used or needed in that subsection, with PMID/DOI fields when known,
 draft access status, venue trust label, discovery provenance, evidence role, and
 notes for later agents.
 
-The draft should also be expansive. Unless the run config overrides this, the
-initial draft should use enough substantive subsections to separately cover the
-major entities, mechanisms, evidence classes, and clinical contexts in the
-structured instruction. For broad prompts without a user-specified paper count,
-aim for roughly 2-4 substantive subsections per chapter, with at least 6
-chapters, at least 2 substantive subsections per chapter, at least 150 words and
-2 prose paragraphs per substantive subsection, and at least 4 citation-register
-rows per substantive subsection.
+The draft should also be expansive enough to support downstream retrieval and
+verification. The initial draft should use a scope-driven chapter and subsection
+structure that separately covers the major entities, mechanisms, evidence
+classes, and clinical contexts in the structured instruction. For broad prompts
+without a user-specified paper count, prefer multiple substantive chapters and
+subsections over a skeletal outline, but do not force a universal chapter or
+subsection count in the drafting instructions. Each substantive subsection
+should have at least 150 words, at least 2 prose paragraphs, and at least 4
+citation-register rows unless the run config explicitly changes those
+thresholds.
 When the drafting agent cannot confidently name enough real citations, it should
 add `citation needed` rows with `PMID` and `DOI` set to `unknown` and notes
 describing what later PubMed retrieval should search for.
