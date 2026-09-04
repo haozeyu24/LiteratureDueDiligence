@@ -1,0 +1,13 @@
+subsection_id,queries_planned,queries_run,total_pubmed_returned,total_collected_for_review,draft_known_citation_count,draft_citations_recovered,draft_citation_recall_rate,abstracts_reviewed,abstract_include_primary_count,abstract_include_context_count,abstract_uncertain_full_text_needed_count,abstract_rejected_count,abstract_rejection_rate,rescue_reviewed,rescue_promoted_count,final_literature_set_count,full_text_download_queue_count,controller_status,notes
+SUB001,1,1,283,199,3,3,1.000,199,34,158,0,7,0.035,0,0,192,34,semantic_abstract_review_complete,Semantic abstract review decisions merged into SQLite.
+SUB002,1,1,243,199,2,2,1.000,199,45,89,0,65,0.327,0,0,134,45,semantic_abstract_review_complete,Semantic abstract review decisions merged into SQLite.
+SUB003,1,1,51,50,3,3,1.000,50,9,31,3,7,0.140,0,0,43,9,semantic_abstract_review_complete,Semantic abstract review decisions merged into SQLite.
+SUB004,1,1,25,25,0,0,unknown,25,6,15,3,1,0.040,0,0,24,6,semantic_abstract_review_complete,Semantic abstract review decisions merged into SQLite.
+SUB005,1,1,35,35,1,1,1.000,35,5,25,5,0,0.000,0,0,35,5,semantic_abstract_review_complete,Semantic abstract review decisions merged into SQLite.
+SUB006,1,1,140,139,0,0,unknown,139,2,64,48,25,0.180,0,0,114,2,semantic_abstract_review_complete,Semantic abstract review decisions merged into SQLite.
+SUB007,1,1,130,130,0,0,unknown,130,16,53,0,61,0.469,0,0,69,16,semantic_abstract_review_complete,Semantic abstract review decisions merged into SQLite.
+SUB008,1,1,113,113,0,0,unknown,113,19,76,0,18,0.159,0,0,95,19,semantic_abstract_review_complete,Semantic abstract review decisions merged into SQLite.
+SUB009,1,1,144,141,2,2,1.000,141,45,82,0,14,0.099,0,0,127,45,semantic_abstract_review_complete,Semantic abstract review decisions merged into SQLite.
+SUB010,1,1,53,53,1,1,1.000,53,10,21,0,22,0.415,0,0,31,10,semantic_abstract_review_complete,Semantic abstract review decisions merged into SQLite.
+SUB011,1,1,293,199,2,2,1.000,199,0,67,13,119,0.598,0,0,80,0,semantic_abstract_review_complete,Semantic abstract review decisions merged into SQLite.
+SUB012,1,1,235,199,2,1,0.500,199,0,68,85,46,0.231,0,0,153,0,semantic_abstract_review_complete,Semantic abstract review decisions merged into SQLite.

@@ -172,13 +172,25 @@ def apply_corrections(
         elif action == "replace_claim" and not corrected_claim:
             replacement_status = "fail"
             notes = "non-supported claim has no corrected_claim"
-        elif count != 1:
-            replacement_status = "fail"
-            notes = f"original claim occurrence count was {count}; expected 1"
-        else:
+        elif count == 1:
             corrected_text = corrected_text.replace(original, replacement, 1)
             replacement_status = "applied"
             notes = "applied exact text replacement"
+        else:
+            corrected_text, whitespace_count = replace_whitespace_tolerant_once(
+                corrected_text,
+                original,
+                replacement,
+            )
+            if whitespace_count == 1:
+                replacement_status = "applied"
+                notes = "applied whitespace-tolerant text replacement"
+            else:
+                replacement_status = "fail"
+                notes = (
+                    f"original claim occurrence count was {count}; "
+                    f"whitespace-tolerant occurrence count was {whitespace_count}; expected 1"
+                )
 
         correction_rows.append(
             {
@@ -198,6 +210,20 @@ def apply_corrections(
         )
 
     return correction_rows, corrected_text
+
+
+def replace_whitespace_tolerant_once(
+    text: str,
+    original: str,
+    replacement: str,
+) -> tuple[str, int]:
+    pattern = re.escape(original.strip())
+    pattern = re.sub(r"\\\s+", r"\\s+", pattern)
+    matches = list(re.finditer(pattern, text))
+    if len(matches) != 1:
+        return text, len(matches)
+    match = matches[0]
+    return text[: match.start()] + replacement + text[match.end() :], 1
 
 
 def ensure_traceable_replacement(

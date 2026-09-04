@@ -1,0 +1,7 @@
+check_name,check_status,observed_value,notes
+assembled_review_exists,pass,127900,Assembled review exists and is populated.
+all_subsections_present,pass,12/12,Every normalized subsection appears exactly once.
+citation_registers_preserved,pass,12/12,Each assembled subsection preserves a citation register.
+residual_uncertainty_preserved,pass,12/12,Each assembled subsection preserves residual uncertainty.
+no_new_untraced_citations,pass,0,Assembly did not introduce new untraced citation markers.
+citation_ids_preserved,pass,101/101,Assembled draft preserves all citation IDs from normalized subsections.

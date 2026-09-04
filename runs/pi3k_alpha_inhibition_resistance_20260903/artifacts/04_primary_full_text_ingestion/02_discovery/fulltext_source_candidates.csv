@@ -1,0 +1,53 @@
+paper_id,pmid,pmcid,doi,source_name,source_format,source_url,discovery_status,notes
+pmid-24879796,24879796,,10.1158/1078-0432.CCR-13-2769,europe_pmc,pdf,https://aacr.figshare.com/articles/journal_contribution/Supplementary_Figure_1_from_Targeting_PI3K_mTOR_Overcomes_Resistance_to_HER2-Targeted_Therapy_Independent_of_Feedback_Activation_of_AKT/22449734/1/files/39900800.pdf,found,Europe PMC fullTextUrlList.
+pmid-24879796,24879796,,10.1158/1078-0432.CCR-13-2769,semantic_scholar_pdf,pdf,,discovery_failed,HTTP Error 429: 
+pmid-25528022,25528022,,10.1007/s10549-014-3239-5,semantic_scholar,pdf,https://figshare.com/articles/journal_contribution/A_preclinical_evaluation_of_the_PI3K_alpha_delta_dominant_inhibitor_BAY_80-6946_in_HER2-positive_breast_cancer_models_with_acquired_resistance_to_the_HER2-targeted_therapies_trastuzumab_and_lapatinib_/10787282,found,Semantic Scholar openAccessPdf.
+pmid-30115483,30115483,,10.1016/j.oraloncology.2018.07.010,semantic_scholar_pdf,pdf,,discovery_failed,HTTP Error 429: 
+pmid-30245395,30245395,,10.1016/j.ejmech.2018.09.002,semantic_scholar_pdf,pdf,,discovery_failed,HTTP Error 429: 
+pmid-30413407,30413407,,10.1158/2159-8290.CD-NB2018-146,semantic_scholar_pdf,pdf,,discovery_failed,HTTP Error 429: 
+pmid-30543347,30543347,PMC6439561,10.1001/jamaoncol.2018.4475,ncbi_pmc,pmc_xml,https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi?db=pmc&id=6439561&retmode=xml,from_pmcid,
+pmid-30543347,30543347,PMC6439561,10.1001/jamaoncol.2018.4475,europe_pmc,pmc_xml,https://www.ebi.ac.uk/europepmc/webservices/rest/6439561/fullTextXML,from_pmcid,
+pmid-30543347,30543347,PMC6439561,10.1001/jamaoncol.2018.4475,europe_pmc,pdf,https://jamanetwork.com/journals/jamaoncology/articlepdf/2718005/jamaoncology_juric_2018_oi_180085.pdf,found,Europe PMC fullTextUrlList.
+pmid-30543347,30543347,PMC6439561,10.1001/jamaoncol.2018.4475,openalex,pdf,https://jamanetwork.com/journals/jamaoncology/articlepdf/2718005/jamaoncology_juric_2018_oi_180085.pdf,found,OpenAlex open-access PDF URL.
+pmid-30543347,30543347,PMC6439561,10.1001/jamaoncol.2018.4475,semantic_scholar_pdf,pdf,,discovery_failed,HTTP Error 429: 
+pmid-30860495,30860495,PMC6538319,10.1172/jci.insight.125341,ncbi_pmc,pmc_xml,https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi?db=pmc&id=6538319&retmode=xml,from_pmcid,
+pmid-30860495,30860495,PMC6538319,10.1172/jci.insight.125341,europe_pmc,pmc_xml,https://www.ebi.ac.uk/europepmc/webservices/rest/6538319/fullTextXML,from_pmcid,
+pmid-30860495,30860495,PMC6538319,10.1172/jci.insight.125341,europe_pmc,pdf,https://europepmc.org/articles/PMC6538319?pdf=render,found,Europe PMC fullTextUrlList.
+pmid-30860495,30860495,PMC6538319,10.1172/jci.insight.125341,semantic_scholar,pdf,https://doi.org/10.1172/jci.insight.125341,found,Semantic Scholar openAccessPdf.
+pmid-31091374,31091374,,10.1056/NEJMoa1813904,openalex,pdf,https://www.nejm.org/doi/pdf/10.1056/NEJMoa1813904?articleTools=true,found,OpenAlex open-access PDF URL.
+pmid-31091374,31091374,,10.1056/NEJMoa1813904,semantic_scholar,pdf,https://www.nejm.org/doi/pdf/10.1056/NEJMoa1813904?articleTools=true,found,Semantic Scholar openAccessPdf.
+pmid-31494037,31494037,,10.1016/S1470-2045(19)30420-6,openalex,pdf,http://hdl.handle.net/2318/1715124,found,OpenAlex open-access PDF URL.
+pmid-31494037,31494037,,10.1016/S1470-2045(19)30420-6,semantic_scholar_pdf,pdf,,discovery_failed,HTTP Error 429: 
+pmid-32415339,32415339,,10.1007/s11912-020-00917-8,semantic_scholar_pdf,pdf,,discovery_failed,HTTP Error 429: 
+pmid-32416251,32416251,,10.1016/j.annonc.2020.05.001,europe_pmc,pdf,http://www.annalsofoncology.org/article/S0923753420397982/pdf,found,Europe PMC fullTextUrlList.
+pmid-32416251,32416251,,10.1016/j.annonc.2020.05.001,openalex,pdf,http://www.annalsofoncology.org/article/S0923753420397982/pdf,found,OpenAlex open-access PDF URL.
+pmid-32416251,32416251,,10.1016/j.annonc.2020.05.001,semantic_scholar,pdf,http://www.annalsofoncology.org/article/S0923753420397982/pdf,found,Semantic Scholar openAccessPdf.
+pmid-32887722,32887722,,10.1158/1078-0432.CCR-20-0645,semantic_scholar_pdf,pdf,,discovery_failed,HTTP Error 429: 
+pmid-32964734,32964734,,10.2217/fon-2020-0464,semantic_scholar_pdf,pdf,,discovery_failed,HTTP Error 429: 
+pmid-33213227,33213227,,10.1080/17425255.2021.1844662,semantic_scholar_pdf,pdf,,discovery_failed,HTTP Error 429: 
+pmid-33246021,33246021,,10.1016/j.annonc.2020.11.011,europe_pmc,pdf,http://www.annalsofoncology.org/article/S0923753420431667/pdf,found,Europe PMC fullTextUrlList.
+pmid-33246021,33246021,,10.1016/j.annonc.2020.11.011,openalex,pdf,http://www.annalsofoncology.org/article/S0923753420431667/pdf,found,OpenAlex open-access PDF URL.
+pmid-33246021,33246021,,10.1016/j.annonc.2020.11.011,semantic_scholar_pdf,pdf,,discovery_failed,HTTP Error 429: 
+pmid-33622114,33622114,,10.1080/14656566.2021.1873952,semantic_scholar_pdf,pdf,,discovery_failed,HTTP Error 429: 
+pmid-33794206,33794206,,10.1016/S1470-2045(21)00034-6,semantic_scholar_pdf,pdf,,discovery_failed,HTTP Error 429: 
+pmid-34047239,34047239,,10.1080/14740338.2021.1931116,semantic_scholar_pdf,pdf,,discovery_failed,HTTP Error 429: 
+pmid-35000092,35000092,,10.1007/s10549-021-06476-1,semantic_scholar_pdf,pdf,,discovery_failed,HTTP Error 429: 
+pmid-35771551,35771551,,10.1158/2159-8290.CD-21-1696,openalex,pdf,https://aacrjournals.org/cancerdiscovery/article-pdf/12/9/2058/3203574/2058.pdf,found,OpenAlex open-access PDF URL.
+pmid-35771551,35771551,,10.1158/2159-8290.CD-21-1696,semantic_scholar_pdf,pdf,,discovery_failed,HTTP Error 429: 
+pmid-35982377,35982377,,10.1007/s11427-021-2140-8,semantic_scholar_pdf,pdf,,discovery_failed,HTTP Error 429: 
+pmid-36455032,36455032,,10.1021/acs.jmedchem.2c01422,semantic_scholar_pdf,pdf,,discovery_failed,HTTP Error 429: 
+pmid-37704834,37704834,,10.1007/s10549-023-07110-y,semantic_scholar_pdf,pdf,,discovery_failed,HTTP Error 429: 
+pmid-37975961,37975961,,10.1007/s40261-023-01325-z,semantic_scholar_pdf,pdf,,discovery_failed,HTTP Error 429: 
+pmid-38986734,38986734,,10.1016/j.canlet.2024.217112,semantic_scholar_pdf,pdf,,discovery_failed,HTTP Error 429: 
+pmid-39476340,39476340,,10.1056/NEJMoa2404625,semantic_scholar_pdf,pdf,,discovery_failed,HTTP Error 429: 
+pmid-39637900,39637900,,10.1016/S1470-2045(24)00673-9,semantic_scholar_pdf,pdf,,discovery_failed,HTTP Error 429: 
+pmid-40121890,40121890,,10.1016/j.ctrv.2025.102924,semantic_scholar_pdf,pdf,,discovery_failed,HTTP Error 429: 
+pmid-40203765,40203765,,10.1016/j.ejca.2025.115397,semantic_scholar_pdf,pdf,,discovery_failed,HTTP Error 429: 
+pmid-40295072,40295072,,10.21873/anticanres.17567,openalex,pdf,https://ar.iiarjournals.org/content/anticanres/45/5/1877.full.pdf,found,OpenAlex open-access PDF URL.
+pmid-40295072,40295072,,10.21873/anticanres.17567,semantic_scholar,pdf,https://ar.iiarjournals.org/content/anticanres/45/5/1877.full.pdf,found,Semantic Scholar openAccessPdf.
+pmid-40845250,40845250,,10.1200/JCO-25-00663,semantic_scholar_pdf,pdf,,discovery_failed,HTTP Error 429: 
+pmid-41406241,41406241,,10.1126/scitranslmed.adp5088,semantic_scholar_pdf,pdf,,discovery_failed,HTTP Error 429: 
+pmid-41967638,41967638,,10.1016/j.annonc.2026.04.003,semantic_scholar_pdf,pdf,,discovery_failed,HTTP Error 429: 
+pmid-42024964,42024964,,10.1016/j.ejmech.2026.118879,semantic_scholar_pdf,pdf,,discovery_failed,HTTP Error 429: 
+pmid-42263466,42263466,,10.1016/j.clbc.2026.05.004,semantic_scholar_pdf,pdf,,discovery_failed,HTTP Error 429: 
+pmid-42635598,42635598,,10.1158/1078-0432.CCR-26-1816,semantic_scholar_pdf,pdf,,discovery_failed,HTTP Error 429: 

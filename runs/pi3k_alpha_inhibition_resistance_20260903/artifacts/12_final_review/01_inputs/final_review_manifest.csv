@@ -1,0 +1,21 @@
+section_id,section_type,title,source_subsection_id,citation_count,uncertainty_note_count,section_status,notes
+FRONT-ABSTRACT,front_matter,Abstract,,0,0,assembled,Generated from structured objective and chapter map.
+CH01,chapter,Clinical And Pharmacologic Frame,,0,0,assembled,Chapter heading preserved from corrected review.
+SUB001,subsection,"PIK3CA Alteration As Entry Point, Not Resistance Explanation",SUB001,7,1,assembled,Reader-facing subsection prose preserved and lightly polished from corrected review.
+SUB002,subsection,Approved Alpelisib Benefit And The Durability Problem,SUB002,7,2,assembled,Reader-facing subsection prose preserved and lightly polished from corrected review.
+CH02,chapter,Inhibitor Landscape And Therapeutic Index,,0,0,assembled,Chapter heading preserved from corrected review.
+SUB003,subsection,Inavolisib And The Clinical Triplet Context,SUB003,7,2,assembled,Reader-facing subsection prose preserved and lightly polished from corrected review.
+SUB004,subsection,"STX-478, RLY-2608, And Mutant-Selective Hypotheses",SUB004,5,1,assembled,Reader-facing subsection prose preserved and lightly polished from corrected review.
+CH03,chapter,Genetic And Pathway Reactivation Mechanisms,,0,0,assembled,Chapter heading preserved from corrected review.
+SUB005,subsection,PTEN Loss And p110-beta Compensation,SUB005,7,1,assembled,Reader-facing subsection prose preserved and lightly polished from corrected review.
+SUB006,subsection,Secondary PIK3CA Mutations And On-Target Resistance,SUB006,7,1,assembled,Reader-facing subsection prose preserved and lightly polished from corrected review.
+SUB007,subsection,AKT/mTOR Output Persistence,SUB007,8,1,assembled,Reader-facing subsection prose preserved and lightly polished from corrected review.
+CH04,chapter,"Bypass, Cellular State, And Tumor Context",,0,0,assembled,Chapter heading preserved from corrected review.
+SUB008,subsection,"RTK, HER-family, IGF1R, And MAPK/ERK Bypass",SUB008,8,2,assembled,Reader-facing subsection prose preserved and lightly polished from corrected review.
+SUB009,subsection,Endocrine Therapy Crosstalk And Prior CDK4/6 Exposure,SUB009,11,1,assembled,Reader-facing subsection prose preserved and lightly polished from corrected review.
+SUB010,subsection,"Heterogeneity, Clonal Selection, And Patient-Derived Evidence",SUB010,14,1,assembled,Reader-facing subsection prose preserved and lightly polished from corrected review.
+CH05,chapter,"Clinical Trials, Combinations, And Evidence Synthesis",,0,0,assembled,Chapter heading preserved from corrected review.
+SUB011,subsection,"Reading Successful, Failed, And Combination Trials",SUB011,10,1,assembled,Reader-facing subsection prose preserved and lightly polished from corrected review.
+SUB012,subsection,Biomarkers And Practical Resistance Taxonomy,SUB012,10,1,assembled,Reader-facing subsection prose preserved and lightly polished from corrected review.
+BACK-LIMITATIONS,back_matter,Limitations and Experimental Priorities,,0,0,assembled,Consolidates scientific limitations and experimental priorities.
+BACK-REFERENCES,back_matter,References,,55,0,assembled,Deduplicated numbered reference list.

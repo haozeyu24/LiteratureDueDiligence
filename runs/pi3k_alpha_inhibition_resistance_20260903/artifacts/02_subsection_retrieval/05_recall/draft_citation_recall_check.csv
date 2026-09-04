@@ -1,0 +1,17 @@
+subsection_id,citation_id,citation,PMID,DOI,discovery_provenance,found_in_final_set,controller_decision,notes
+SUB001,S01-C001,"Andre et al., SOLAR-1 alpelisib plus fulvestrant in PIK3CA-mutated advanced breast cancer",31091374,10.1056/NEJMoa1813904,searched_pubmed,yes,recovered,Recovered in PubMed candidate set.
+SUB001,S01-C002,Genomic determinants of response to alpelisib plus fulvestrant in SOLAR-1,41967638,10.1016/j.annonc.2026.04.003,searched_pubmed,yes,recovered,Recovered in PubMed candidate set.
+SUB001,S01-C003,Extended spectrum of PIK3CA mutations detected in breast carcinoma,36321996,unknown,searched_pubmed,yes,recovered,Recovered in PubMed candidate set.
+SUB002,S02-C001,"Andre et al., SOLAR-1 primary report",31091374,10.1056/NEJMoa1813904,searched_pubmed,yes,recovered,Recovered in PubMed candidate set.
+SUB002,S02-C002,"Andre et al., SOLAR-1 final overall survival",33246021,10.1016/j.annonc.2020.11.011,searched_pubmed,yes,recovered,Recovered in PubMed candidate set.
+SUB003,S03-C001,Overall survival with inavolisib in PIK3CA-mutated advanced breast cancer,40454641,unknown,searched_pubmed,yes,recovered,Recovered in PubMed candidate set.
+SUB003,S03-C002,FDA approval summary for inavolisib with palbociclib and fulvestrant,40845250,10.1200/JCO-25-00663,searched_pubmed,yes,recovered,Recovered in PubMed candidate set.
+SUB003,S03-C003,Inavolisib review in HR-positive/HER2-negative breast cancer,42496151,10.1080/17425255.2026.2710110,searched_pubmed,yes,recovered,Recovered in PubMed candidate set.
+SUB005,S05-C001,"Juric et al., convergent loss of PTEN and resistance to PI(3)K-alpha inhibition",25409150,10.1038/nature13948,searched_pubmed,yes,recovered,Recovered in PubMed candidate set.
+SUB009,S09-C001,"Andre et al., SOLAR-1 alpelisib plus fulvestrant",31091374,10.1056/NEJMoa1813904,searched_pubmed,yes,recovered,Recovered in PubMed candidate set.
+SUB009,S09-C003,Overall survival with inavolisib in PIK3CA-mutated advanced breast cancer,40454641,unknown,searched_pubmed,yes,recovered,Recovered in PubMed candidate set.
+SUB010,S10-C001,"Juric et al., convergent PTEN loss under BYL719 pressure",25409150,10.1038/nature13948,searched_pubmed,yes,recovered,Recovered in PubMed candidate set.
+SUB011,S11-C001,"Andre et al., SOLAR-1 primary report",31091374,10.1056/NEJMoa1813904,searched_pubmed,yes,recovered,Recovered in PubMed candidate set.
+SUB011,S11-C002,FDA approval summary for inavolisib with palbociclib and fulvestrant,40845250,10.1200/JCO-25-00663,searched_pubmed,yes,recovered,Recovered in PubMed candidate set.
+SUB012,S12-C001,Genomic determinants of response to alpelisib plus fulvestrant in SOLAR-1,41967638,10.1016/j.annonc.2026.04.003,searched_pubmed,yes,recovered,Recovered in PubMed candidate set.
+SUB012,S12-C002,Extended spectrum of PIK3CA mutations detected in breast carcinoma,36321996,unknown,searched_pubmed,yes,recovered,Recovered in PubMed candidate set.

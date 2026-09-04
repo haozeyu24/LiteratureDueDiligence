@@ -1,0 +1,20 @@
+check_name,check_status,observed_value,notes
+final_review_populated,pass,34367,Final review is populated.
+has_required_reader_sections,pass,present,Final review includes required reader-facing sections.
+no_orientation_section,pass,absent,Final review does not include workflow-oriented orientation prose.
+title_is_topic_specific,pass,"Resistance to PI3K-alpha Inhibition: Clinical Boundaries, Pathway Reactivation, and Biomarker-Guided Next Steps",Final review has a topic-specific title.
+abstract_is_substantive,pass,178,Abstract is long enough to summarize the scientific argument.
+no_machine_scaffold_language,pass,0,No machine-scaffold language detected in reader-facing text.
+llm_semantic_synthesis_attested,pass,present,LLM semantic final synthesis attestation is present and complete.
+has_references,pass,present,Deduplicated reference list is present.
+no_evidence_appendix_in_final,pass,absent,Final review does not include oversized audit appendix.
+no_stale_claim_verification_warning,pass,absent,Stale assembly warning removed.
+no_source_html_comments,pass,absent,Source comments removed from reader-facing draft.
+no_new_untraced_citations,pass,0,No new citation IDs introduced.
+no_workflow_citation_ids_in_main_text,pass,0,Workflow citation IDs were removed from main text.
+no_raw_paper_ids_in_main_text,pass,0,Workflow paper IDs were converted to numbered citations.
+reference_ids_match_main_text_sources,pass,missing=0;extra=0,References match deduplicated paper IDs used by source main prose.
+references_deduplicated,pass,55,Reference list has one row per paper ID.
+references_have_pmids_or_titles,pass,55,Every reference has at least a PMID or title.
+subsection_manifest_populated,pass,12,Subsection rows recorded.
+section_status_counts_recorded,pass,assembled:20,Section status counts recorded.
