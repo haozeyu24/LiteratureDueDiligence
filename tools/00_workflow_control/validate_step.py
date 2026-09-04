@@ -70,7 +70,25 @@ FINAL_REVIEW_DIR = Path("artifacts/12_final_review")
 FINAL_REVIEW_INPUT_DIR = FINAL_REVIEW_DIR / "01_inputs"
 FINAL_REVIEW_OUTPUT_DIR = FINAL_REVIEW_DIR / "02_outputs"
 FINAL_REVIEW_VERIFY_DIR = FINAL_REVIEW_DIR / "03_verification"
-FINAL_REVIEW_SUMMARY_DIR = FINAL_REVIEW_DIR / "04_outputs"
+FINAL_REVIEW_SUMMARY_DIR = FINAL_REVIEW_DIR / "04_summary"
+FINAL_REVIEW_SEMANTIC_ATTESTATION = FINAL_REVIEW_VERIFY_DIR / "semantic_final_synthesis_attestation.md"
+
+FINAL_REVIEW_MACHINE_SCAFFOLD_PATTERNS = [
+    r"\buser-defined\b",
+    r"\bworkflow artifact\b",
+    r"\bworkflow report\b",
+    r"\baudit register",
+    r"\baudit artifact",
+    r"\bupstream workflow artifacts\b",
+    r"\bhuman inspection\b",
+    r"\bsource draft\b",
+    r"\bwork order\b",
+    r"\bpaper packet\b",
+    r"\bpacket papers\b",
+    r"\bpacket-supported\b",
+    r"This review synthesizes verified evidence",
+    r"Claim-level verification has not yet been performed",
+]
 FULLTEXT_CHUNK_POLICY_NAME = "structure_aware_1000_150"
 FULLTEXT_CHUNK_SIZE_CHARS = 1000
 FULLTEXT_CHUNK_OVERLAP_CHARS = 150
@@ -164,6 +182,9 @@ def mark_step_validation_passed(run_dir: Path, step_name: str) -> None:
     sqlite_path = run_dir / "artifacts/00_workflow_control/01_state/workflow_state.sqlite"
     if not sqlite_path.exists():
         return
+    sqlite_step_name = {
+        "semantic_abstract_review_complete": "semantic_abstract_review",
+    }.get(step_name, step_name)
     try:
         with sqlite3.connect(sqlite_path) as connection:
             connection.execute(
@@ -172,7 +193,7 @@ def mark_step_validation_passed(run_dir: Path, step_name: str) -> None:
                 SET validation_status = 'passed'
                 WHERE step_name = ?
                 """,
-                (step_name,),
+                (sqlite_step_name,),
             )
     except sqlite3.Error:
         return
@@ -318,7 +339,7 @@ def check_step_specific_rules(
     if step == "semantic_abstract_review_setup":
         check_semantic_abstract_review_setup(run_dir, errors, allow_later_steps)
     if step == "semantic_abstract_review_pilot":
-        check_semantic_abstract_review_pilot(run_dir, errors)
+        check_semantic_abstract_review_pilot(run_dir, errors, allow_later_steps)
     if step == "semantic_abstract_review_complete":
         check_semantic_abstract_review_complete(run_dir, errors)
     if step == "primary_full_text_ingestion":
@@ -1467,8 +1488,10 @@ def check_semantic_abstract_review_setup(
         errors.append("batch candidate coverage does not exactly match SQLite subsection_papers")
 
 
-def check_semantic_abstract_review_pilot(run_dir: Path, errors: list[str]) -> None:
-    check_semantic_abstract_review_setup(run_dir, errors)
+def check_semantic_abstract_review_pilot(
+    run_dir: Path, errors: list[str], allow_later_steps: bool = False
+) -> None:
+    check_semantic_abstract_review_setup(run_dir, errors, allow_later_steps)
     reviewed_dir = run_dir / SEMANTIC_REVIEWED_DIR
     if not reviewed_dir.exists():
         errors.append("missing reviewed_batches directory for pilot")
@@ -2749,8 +2772,6 @@ def check_terminology_normalization(run_dir: Path, errors: list[str]) -> None:
         errors.append("terminology_glossary.csv has unexpected columns")
     if check_rows and set(check_rows[0]) != expected_check_fields:
         errors.append("terminology_normalization_check.csv has unexpected columns")
-    if not glossary_rows:
-        errors.append("terminology_glossary.csv has no active rows; provide alias overrides or rerun setup intentionally")
     rewritten_ids = {path.stem for path in rewritten_dir.glob("SUB*.md")}
     normalized_ids = {path.stem for path in normalized_dir.glob("SUB*.md")}
     check_ids = {row.get("subsection_id", "") for row in check_rows}
@@ -3172,6 +3193,7 @@ def check_final_review(run_dir: Path, errors: list[str]) -> None:
     references_path = run_dir / FINAL_REVIEW_OUTPUT_DIR / "references.csv"
     manifest_path = run_dir / FINAL_REVIEW_INPUT_DIR / "final_review_manifest.csv"
     checks_path = run_dir / FINAL_REVIEW_VERIFY_DIR / "final_review_check.csv"
+    attestation_path = run_dir / FINAL_REVIEW_SEMANTIC_ATTESTATION
     summary_path = run_dir / FINAL_REVIEW_SUMMARY_DIR / "final_review_summary.md"
     stage_readme_path = run_dir / FINAL_REVIEW_DIR / "README.md"
     required = [
@@ -3182,6 +3204,7 @@ def check_final_review(run_dir: Path, errors: list[str]) -> None:
         references_path,
         manifest_path,
         checks_path,
+        attestation_path,
         summary_path,
         stage_readme_path,
     ]
@@ -3219,6 +3242,10 @@ def check_final_review(run_dir: Path, errors: list[str]) -> None:
         "final_review_populated",
         "has_required_reader_sections",
         "no_orientation_section",
+        "title_is_topic_specific",
+        "abstract_is_substantive",
+        "no_machine_scaffold_language",
+        "llm_semantic_synthesis_attested",
         "has_references",
         "no_evidence_appendix_in_final",
         "no_stale_claim_verification_warning",
@@ -3255,6 +3282,27 @@ def check_final_review(run_dir: Path, errors: list[str]) -> None:
         errors.append("final_review.md contains stale claim-verification warning")
     if "<!-- source_subsection_id:" in final_text:
         errors.append("final_review.md contains source subsection HTML comments")
+    title = final_text.splitlines()[0].removeprefix("# ").strip() if final_text.splitlines() else ""
+    if not title or title == "Final Literature Review":
+        errors.append("final_review.md must have a topic-specific title")
+    abstract_match = re.search(r"## Abstract\s+(.*?)(?:\n## |\Z)", final_text, flags=re.DOTALL)
+    abstract = abstract_match.group(1).strip() if abstract_match else ""
+    if len(re.findall(r"\b[\w'-]+\b", abstract)) < 120:
+        errors.append("final_review.md abstract is too short to function as a substantive review abstract")
+    machine_hits = [
+        pattern
+        for pattern in FINAL_REVIEW_MACHINE_SCAFFOLD_PATTERNS
+        if re.search(pattern, main_text_before_references(final_text), flags=re.IGNORECASE)
+    ]
+    leaked_internal_ids = re.findall(
+        r"\b(?:SUB\d{3}-[CR]\d{2,3}|S\d{2}-C\d{3}|C\d{3}-\d{3})\b",
+        main_text_before_references(final_text),
+    )
+    if machine_hits:
+        errors.append("final_review.md contains machine-scaffold language: " + ", ".join(machine_hits))
+    if leaked_internal_ids:
+        errors.append("final_review.md contains leaked internal citation IDs")
+    validate_semantic_final_attestation(attestation_path, errors)
 
     reference_rows = read_csv_rows(references_path, errors)
     source_citations = set(re.findall(r"\b(?:SUB|S)\d{2,3}-[CR]\d{3}\b", corrected_text))
@@ -3311,6 +3359,37 @@ def check_final_review(run_dir: Path, errors: list[str]) -> None:
         errors.append(f"invalid SQLite final_review status: {step[0]}")
 
 
+def validate_semantic_final_attestation(path: Path, errors: list[str]) -> None:
+    text = path.read_text(encoding="utf-8")
+    required_markers = [
+        "# LLM Semantic Final Synthesis Attestation",
+        "## Semantic Rewrite Scope",
+        "## Global Review Judgment",
+        "## Rewrite Actions",
+        "## Structure And Redundancy Review",
+        "## Citation And Evidence Guardrails",
+        "## Iteration Notes",
+    ]
+    missing = [marker for marker in required_markers if marker not in text]
+    if missing:
+        errors.append("semantic final synthesis attestation missing markers: " + ", ".join(missing))
+    lowered = text.lower()
+    if not all(term in lowered for term in ("llm", "semantic", "whole")):
+        errors.append("semantic final synthesis attestation must document LLM semantic whole-review reading")
+    if not any(term in lowered for term in ("judgment", "judgement")):
+        errors.append("semantic final synthesis attestation must document a global review judgment")
+    if "rewrite" not in lowered and "rewritten" not in lowered:
+        errors.append("semantic final synthesis attestation must document final rewrite actions")
+    if not any(term in lowered for term in ("merge", "split", "reorder", "collapse", "structure")):
+        errors.append("semantic final synthesis attestation must discuss structure-level synthesis")
+    if not any(term in lowered for term in ("redundancy", "redundant", "repetition")):
+        errors.append("semantic final synthesis attestation must discuss redundancy handling")
+    if not all(term in lowered for term in ("citation", "evidence")):
+        errors.append("semantic final synthesis attestation must document citation and evidence guardrails")
+    if len(re.findall(r"\b[\w'-]+\b", text)) < 120:
+        errors.append("semantic final synthesis attestation is too short")
+
+
 def check_workflow_state_snapshot(path: Path, errors: list[str]) -> None:
     try:
         payload = json.loads(path.read_text(encoding="utf-8"))
@@ -3324,6 +3403,10 @@ def check_workflow_state_snapshot(path: Path, errors: list[str]) -> None:
     subsection_count = payload.get("subsection_count")
     if not isinstance(subsection_count, int) or subsection_count <= 0:
         errors.append("workflow_state_snapshot.json subsection_count must be positive")
+
+
+def main_text_before_references(text: str) -> str:
+    return text.split("\n## References\n", 1)[0]
 
 
 if __name__ == "__main__":

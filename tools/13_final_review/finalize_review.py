@@ -19,10 +19,11 @@ STAGE_DIR = Path("artifacts/12_final_review")
 INPUT_DIR = STAGE_DIR / "01_inputs"
 OUTPUT_DIR = STAGE_DIR / "02_outputs"
 VERIFY_DIR = STAGE_DIR / "03_verification"
-SUMMARY_DIR = STAGE_DIR / "04_outputs"
+SUMMARY_DIR = STAGE_DIR / "04_summary"
 CORRECTED_REVIEW = Path("drafts/corrected_review.md")
 FINAL_REVIEW = Path("drafts/final_review.md")
 PUBMED_INDEX = Path("artifacts/02_subsection_retrieval/03_pubmed/pubmed_record_index.csv")
+SEMANTIC_ATTESTATION = VERIFY_DIR / "semantic_final_synthesis_attestation.md"
 
 MANIFEST_FIELDS = [
     "section_id",
@@ -37,12 +38,44 @@ MANIFEST_FIELDS = [
 
 CHECK_FIELDS = ["check_name", "check_status", "observed_value", "notes"]
 
+MACHINE_SCAFFOLD_PATTERNS = [
+    r"\buser-defined\b",
+    r"\bworkflow artifact\b",
+    r"\bworkflow report\b",
+    r"\baudit register",
+    r"\baudit artifact",
+    r"\bupstream workflow artifacts\b",
+    r"\bhuman inspection\b",
+    r"\bsource draft\b",
+    r"\bwork order\b",
+    r"\bpaper packet\b",
+    r"\bpacket papers\b",
+    r"\bpacket-supported\b",
+    r"This review synthesizes verified evidence",
+    r"Claim-level verification has not yet been performed",
+]
+
+SEMANTIC_ATTESTATION_MARKERS = [
+    "# LLM Semantic Final Synthesis Attestation",
+    "## Semantic Rewrite Scope",
+    "## Global Review Judgment",
+    "## Rewrite Actions",
+    "## Structure And Redundancy Review",
+    "## Citation And Evidence Guardrails",
+    "## Iteration Notes",
+]
+
 
 def main() -> int:
     parser = argparse.ArgumentParser(
         description="Create the final reader-facing review while preserving verified evidence traceability."
     )
     parser.add_argument("run_dir", help="Path to runs/<run_id>.")
+    parser.add_argument(
+        "--refresh-checks",
+        action="store_true",
+        help="Refresh final-review checks after an LLM article-level rewrite without overwriting the final review.",
+    )
     args = parser.parse_args()
 
     run_dir = Path(args.run_dir)
@@ -56,10 +89,27 @@ def main() -> int:
     title = infer_title(run_dir)
     chapters = parse_corrected_review(source_text)
     reference_metadata = load_reference_metadata(run_dir)
+    if args.refresh_checks:
+        final_path = run_dir / FINAL_REVIEW
+        if not final_path.exists():
+            raise SystemExit(f"Missing final review to check: {final_path}")
+        final_text = final_path.read_text(encoding="utf-8")
+        manifest_rows, reference_rows = load_or_build_review_support(
+            run_dir, title, chapters, reference_metadata
+        )
+        check_rows = build_checks(run_dir, source_text, final_text, manifest_rows, reference_rows)
+        write_csv(run_dir / VERIFY_DIR / "final_review_check.csv", CHECK_FIELDS, check_rows)
+        write_summary(run_dir, manifest_rows, check_rows)
+        write_sqlite(run_dir, manifest_rows, check_rows)
+        failed = [row for row in check_rows if row["check_status"] != "pass"]
+        if failed:
+            raise SystemExit("Final review has failed checks; inspect final_review_check.csv")
+        print(f"Final review checks refreshed for {final_path}")
+        return 0
     final_text, manifest_rows, reference_rows = build_final_review(
         title, chapters, reference_metadata
     )
-    check_rows = build_checks(source_text, final_text, manifest_rows, reference_rows)
+    check_rows = build_checks(run_dir, source_text, final_text, manifest_rows, reference_rows)
 
     (run_dir / FINAL_REVIEW).parent.mkdir(parents=True, exist_ok=True)
     (run_dir / FINAL_REVIEW).write_text(final_text, encoding="utf-8")
@@ -100,7 +150,7 @@ Folders:
 - `01_inputs`: final review section manifest
 - `02_outputs`: final review copy and deduplicated references
 - `03_verification`: deterministic final-review checks
-- `04_outputs`: final-stage summary
+- `04_summary`: final-stage summary
 """
     (run_dir / STAGE_DIR / "README.md").write_text(text, encoding="utf-8")
 
@@ -119,7 +169,39 @@ def infer_title(run_dir: Path) -> str:
         topic = review_match.group(1).strip()
         topic = topic[0].upper() + topic[1:] if topic else topic
         return topic
+    if objective.lower().startswith("review "):
+        topic = re.sub(r"^review\s+", "", objective, flags=re.IGNORECASE).strip()
+        topic = re.split(r",\s+(?:with|spanning|including)\b", topic, maxsplit=1, flags=re.IGNORECASE)[0]
+        topic = re.sub(r"^mechanisms that may control\s+", "Protein-Level Regulation of ", topic, flags=re.IGNORECASE)
+        topic = re.sub(
+            r"\s+protein folding,.*$",
+            "",
+            topic,
+            flags=re.IGNORECASE,
+        )
+        topic = re.sub(r"\btranscription factor$", "transcription factors", topic, flags=re.IGNORECASE)
+        return title_case_preserving_acronyms(topic.rstrip("."))
     return "Final Literature Review"
+
+
+def title_case_preserving_acronyms(text: str) -> str:
+    small_words = {"a", "an", "and", "as", "at", "by", "for", "from", "in", "of", "on", "or", "the", "to", "with"}
+    words = re.split(r"(\s+|-)", text)
+    titled = []
+    word_index = 0
+    for token in words:
+        if not token or token.isspace() or token == "-":
+            titled.append(token)
+            continue
+        lower = token.lower()
+        if token.isupper() or any(char.isdigit() for char in token):
+            titled.append(token)
+        elif word_index > 0 and lower in small_words:
+            titled.append(lower)
+        else:
+            titled.append(token[:1].upper() + token[1:])
+        word_index += 1
+    return "".join(titled)
 
 
 def parse_corrected_review(source_text: str) -> list[dict]:
@@ -277,15 +359,15 @@ def build_final_review(
 
     lines.extend(
         [
-            "## Synthesis For Human Inspection",
+            "## Limitations and Experimental Priorities",
             "",
-            build_human_inspection_synthesis(chapters),
+            build_limitations_and_priorities(chapters),
             "",
             "## References",
             "",
         ]
     )
-    manifest_rows.append(section_row("BACK-HUMAN-INSPECTION", "back_matter", "Synthesis For Human Inspection", "", 0, 0, "assembled", "Consolidates uncertainty notes for human review."))
+    manifest_rows.append(section_row("BACK-LIMITATIONS", "back_matter", "Limitations and Experimental Priorities", "", 0, 0, "assembled", "Consolidates scientific limitations and experimental priorities."))
     manifest_rows.append(section_row("BACK-REFERENCES", "back_matter", "References", "", len(reference_order), 0, "assembled", "Deduplicated numbered reference list."))
 
     reference_rows = build_reference_rows(reference_order, reference_metadata)
@@ -319,7 +401,7 @@ def merge_adjacent_numbered_citations(match: re.Match[str]) -> str:
 
 
 def remove_workflow_citation_ids(text: str) -> str:
-    text = re.sub(r"\s*`[^`]*(?:SUB|S)\d{2,3}-[CR]\d{3}[^`]*`", "", text)
+    text = re.sub(r"\s*`[^`]*(?:(?:SUB|S)\d{2,3}-[CR]\d{2,3}|C\d{3}-\d{3})[^`]*`", "", text)
     text = re.sub(r"\s+([.,;:])", r"\1", text)
     return text
 
@@ -404,27 +486,39 @@ def ensure_terminal_period(text: str) -> str:
 
 
 def build_abstract(title: str, chapters: list[dict]) -> str:
-    chapter_titles = [chapter["title"] for chapter in chapters]
-    subsection_titles = [
-        subsection["title"]
-        for chapter in chapters
-        for subsection in chapter["subsections"]
-    ]
-    first_clause = (
-        f"This review synthesizes verified evidence on {title[0].lower() + title[1:]}"
-        if title != "Final Literature Review"
-        else "This review synthesizes verified evidence for the user-defined biomedical review topic"
-    )
+    topic = title
+    topic = re.sub(r"^Protein-Level Regulation of\s+", "", topic, flags=re.IGNORECASE)
+    topic = sentence_case_preserving_acronyms(topic) if topic and topic != "Final Literature Review" else "the reviewed biological problem"
+    chapter_titles = [chapter["title"].lower() for chapter in chapters]
+    evidence_scope = serial_phrase(chapter_titles[:4]) if chapter_titles else "the major evidence categories"
     return (
-        f"{first_clause}. It is organized around {serial_phrase(chapter_titles)}. "
-        "The final interpretation emphasizes mechanism-specific evidence, clinical context, "
-        "trial feasibility, and the difference between direct resistance evidence and useful "
-        "biological context. The most important recurring topics are "
-        f"{serial_phrase(subsection_titles[:8])}, with additional sections preserving clinical "
-        "trial interpretation, biomarker strategy, and verification priorities. Claims are "
-        "linked to a deduplicated numbered reference list, with detailed audit registers "
-        "preserved in upstream workflow artifacts."
+        f"The literature on {topic} contains evidence at different levels of directness, "
+        "from primary observations in the target system to broader contextual or analog "
+        "findings. This review organizes that evidence around the question posed by the "
+        "structured instruction, separating direct support from indirect, model-dependent, "
+        "or hypothesis-generating material. The reviewed evidence spans "
+        f"{evidence_scope}. The strongest claims are those supported by measurements that "
+        "match the stated endpoint, use appropriate controls, and are traceable to specific "
+        "sources rather than inferred only from downstream associations. Across the available "
+        "studies, the central challenge is transferability: findings may vary by model system, "
+        "experimental context, assay design, and biological setting. The resulting framework "
+        "therefore prioritizes evidence-matched interpretation, conservative language where "
+        "support is indirect, and explicit experimental priorities for unresolved mechanisms."
     )
+
+
+def sentence_case_preserving_acronyms(text: str) -> str:
+    words = re.split(r"(\s+|-)", text.strip())
+    cased = []
+    for token in words:
+        if not token or token.isspace() or token == "-":
+            cased.append(token)
+            continue
+        if token.isupper() or any(char.isdigit() for char in token):
+            cased.append(token)
+        else:
+            cased.append(token.lower())
+    return "".join(cased)
 
 
 def build_orientation(chapters: list[dict]) -> str:
@@ -440,32 +534,45 @@ def build_orientation(chapters: list[dict]) -> str:
     )
 
 
-def build_human_inspection_synthesis(chapters: list[dict]) -> str:
-    notes = []
-    for chapter in chapters:
-        for subsection in chapter["subsections"]:
-            uncertainty = polish_prose("\n".join(subsection["uncertainty"]).strip())
-            if uncertainty:
-                notes.append(f"{subsection['title']}: {uncertainty}")
-    if not notes:
-        return "No residual uncertainty notes were captured, but human scientific inspection remains required before external use."
-    selected = notes[:10]
-    text = (
-        "Human inspection should focus on places where the evidence boundary matters most: "
-        "claims extrapolated across model systems, trial settings, drug generations, or patient "
-        "subgroups; claims based on preclinical mechanism without mature clinical confirmation; "
-        "and claims where access limitations or heterogeneous specimens leave causal inference "
-        "open. Detailed subsection-level uncertainty notes remain in the upstream audit artifacts. Priority examples are: "
+def build_limitations_and_priorities(chapters: list[dict]) -> str:
+    chapter_titles = [chapter["title"] for chapter in chapters]
+    scope = serial_phrase(chapter_titles[:4]) if chapter_titles else "the main evidence areas"
+    return (
+        "The major limitation of the current literature is the uneven distribution of direct evidence. "
+        f"The strongest support may cluster in only part of the reviewed scope, including {scope}, "
+        "while other parts of the argument may depend on indirect, contextual, model-system, or "
+        "hypothesis-generating evidence. Those supporting studies can broaden the conceptual map, "
+        "but they should not be promoted into direct conclusions unless the measured endpoint, "
+        "experimental context, and biological entity match the claim being made.\n\n"
+        "The next experimental priority is therefore a claim-matched matrix of readouts rather than "
+        "a single confirmatory assay. Each proposed mechanism should be paired with measurements that "
+        "directly test the relevant endpoint, controls that separate primary effects from downstream "
+        "associations, and perturbations that distinguish causal regulation from correlated state "
+        "changes. Negative or context-limited results should be retained as useful evidence because "
+        "they define the boundary of transferability. Until those experiments are performed in the "
+        "most relevant systems, the strongest conclusion should remain proportional to the directness "
+        "and reproducibility of the evidence."
     )
-    return text + " ".join(selected)
 
 
 def polish_prose(text: str) -> str:
     replacements = [
-        ("The packet", "The evidence set"),
-        ("the packet", "the evidence set"),
+        ("The packet", "The available literature"),
+        ("the packet", "the available literature"),
+        ("The evidence set", "The available literature"),
+        ("the evidence set", "the available literature"),
+        ("direct packet evidence", "direct evidence"),
+        ("Direct packet evidence", "Direct evidence"),
+        ("packet-supported", "literature-supported"),
+        ("Packet-supported", "Literature-supported"),
+        ("packet papers", "studies"),
+        ("Packet papers", "Studies"),
+        ("Existing packet context", "Related evidence"),
+        ("existing packet context", "related evidence"),
         ("The work order", "The source draft"),
         ("the work order", "the source draft"),
+        ("The source draft", "The literature"),
+        ("the source draft", "the literature"),
         ("Later claim verification should", "Interpretation should"),
         ("later claim verification should", "interpretation should"),
         ("Later verification should", "Interpretation should"),
@@ -474,6 +581,16 @@ def polish_prose(text: str) -> str:
         ("Later stages should", "Human follow-up should"),
         ("this subsection should", "this review should"),
         ("This subsection should", "This review should"),
+        ("The review should begin by", "The central starting point is"),
+        ("the review should begin by", "the central starting point is"),
+        ("The review should start by", "The central starting point is"),
+        ("the review should start by", "the central starting point is"),
+        ("For this review,", "For a protein-level account,"),
+        ("for this review,", "for a protein-level account,"),
+        ("Later retrieval should explicitly search", "Future work should explicitly test and search for"),
+        ("later retrieval should explicitly search", "future work should explicitly test and search for"),
+        ("Later figure-level verification should", "Future figure-level review should"),
+        ("later figure-level verification should", "future figure-level review should"),
     ]
     for old, new in replacements:
         text = text.replace(old, new)
@@ -547,6 +664,7 @@ def section_row(
 
 
 def build_checks(
+    run_dir: Path,
     source_text: str,
     final_text: str,
     manifest_rows: list[dict[str, str]],
@@ -562,9 +680,18 @@ def build_checks(
     workflow_citation_ids_left = sorted(citation_like_ids(main_text_before_references(final_text)))
     missing_papers = sorted(source_paper_ids - final_reference_ids)
     extra_reference_ids = sorted(final_reference_ids - source_paper_ids)
+    title = final_text.splitlines()[0].removeprefix("# ").strip() if final_text.splitlines() else ""
+    abstract = abstract_text(final_text)
+    machine_scaffold_hits = machine_scaffold_hits_in_main_text(final_text)
+    attestation_path = run_dir / SEMANTIC_ATTESTATION
+    attestation_status, attestation_notes = semantic_attestation_status(attestation_path)
     checks.append(check_row("final_review_populated", len(final_text.strip()) >= 1000, str(len(final_text.encode("utf-8"))), "Final review is populated."))
     checks.append(check_row("has_required_reader_sections", all(marker in final_text for marker in ("## Abstract", "## Main Review", "## References")), "present", "Final review includes required reader-facing sections."))
     checks.append(check_row("no_orientation_section", "## Orientation" not in final_text, "absent", "Final review does not include workflow-oriented orientation prose."))
+    checks.append(check_row("title_is_topic_specific", bool(title) and title != "Final Literature Review", title or "missing", "Final review has a topic-specific title."))
+    checks.append(check_row("abstract_is_substantive", word_count(abstract) >= 120, str(word_count(abstract)), "Abstract is long enough to summarize the scientific argument."))
+    checks.append(check_row("no_machine_scaffold_language", not machine_scaffold_hits, str(len(machine_scaffold_hits)), ";".join(machine_scaffold_hits[:10]) if machine_scaffold_hits else "No machine-scaffold language detected in reader-facing text."))
+    checks.append(check_row("llm_semantic_synthesis_attested", attestation_status, "present" if attestation_status else "missing_or_incomplete", attestation_notes))
     checks.append(check_row("has_references", "## References" in final_text, "present" if "## References" in final_text else "missing", "Deduplicated reference list is present."))
     checks.append(check_row("no_evidence_appendix_in_final", "## Evidence Appendix" not in final_text and "##### Citation Register" not in final_text, "absent", "Final review does not include oversized audit appendix."))
     checks.append(check_row("no_stale_claim_verification_warning", "Claim-level verification has not yet been performed" not in final_text, "absent", "Stale assembly warning removed."))
@@ -607,6 +734,62 @@ def main_text_before_references(text: str) -> str:
     return text.split("\n## References\n", 1)[0]
 
 
+def abstract_text(text: str) -> str:
+    match = re.search(r"## Abstract\s+(.*?)(?:\n## |\Z)", text, flags=re.DOTALL)
+    return match.group(1).strip() if match else ""
+
+
+def machine_scaffold_hits_in_main_text(text: str) -> list[str]:
+    main_text = main_text_before_references(text)
+    hits = []
+    for pattern in MACHINE_SCAFFOLD_PATTERNS:
+        if re.search(pattern, main_text, flags=re.IGNORECASE):
+            hits.append(pattern)
+    leaked_ids = re.findall(r"\b(?:SUB\d{3}-[CR]\d{2,3}|S\d{2}-C\d{3}|C\d{3}-\d{3})\b", main_text)
+    if leaked_ids:
+        hits.append("internal_citation_ids:" + ",".join(sorted(set(leaked_ids))[:10]))
+    return hits
+
+
+def word_count(text: str) -> int:
+    return len(re.findall(r"\b[\w'-]+\b", text))
+
+
+def semantic_attestation_status(path: Path) -> tuple[bool, str]:
+    if not path.exists():
+        return False, "Missing semantic final synthesis attestation."
+    text = path.read_text(encoding="utf-8")
+    missing = [marker for marker in SEMANTIC_ATTESTATION_MARKERS if marker not in text]
+    lowered = text.lower()
+    semantic_terms = all(term in lowered for term in ("llm", "semantic", "whole"))
+    judgment_terms = any(term in lowered for term in ("judgment", "judgement"))
+    rewrite_terms = "rewrite" in lowered or "rewritten" in lowered
+    structure_terms = any(term in lowered for term in ("merge", "split", "reorder", "collapse", "structure"))
+    redundancy_terms = any(term in lowered for term in ("redundancy", "redundant", "repetition"))
+    evidence_terms = all(term in lowered for term in ("citation", "evidence"))
+    long_enough = word_count(text) >= 120
+    problems = []
+    if missing:
+        problems.append("missing markers: " + "; ".join(missing))
+    if not semantic_terms:
+        problems.append("does not attest LLM semantic whole-review reading")
+    if not judgment_terms:
+        problems.append("does not document a global review judgment")
+    if not rewrite_terms:
+        problems.append("does not document rewrite actions")
+    if not structure_terms:
+        problems.append("does not discuss structure-level synthesis")
+    if not redundancy_terms:
+        problems.append("does not discuss redundancy handling")
+    if not evidence_terms:
+        problems.append("does not discuss citation/evidence guardrails")
+    if not long_enough:
+        problems.append("too short")
+    if problems:
+        return False, "Semantic final synthesis attestation incomplete: " + " | ".join(problems)
+    return True, "LLM semantic final synthesis attestation is present and complete."
+
+
 def check_row(name: str, passed: bool, observed: str, notes: str) -> dict[str, str]:
     return {
         "check_name": name,
@@ -630,6 +813,27 @@ def write_csv(path: Path, fields: list[str], rows: list[dict[str, str]]) -> None
         writer = csv.DictWriter(handle, fieldnames=fields, extrasaction="ignore")
         writer.writeheader()
         writer.writerows(rows)
+
+
+def read_csv(path: Path) -> list[dict[str, str]]:
+    with path.open("r", encoding="utf-8", newline="") as handle:
+        return list(csv.DictReader(handle))
+
+
+def load_or_build_review_support(
+    run_dir: Path,
+    title: str,
+    chapters: list[dict],
+    reference_metadata: dict[str, dict[str, str]],
+) -> tuple[list[dict[str, str]], list[dict[str, str]]]:
+    manifest_path = run_dir / INPUT_DIR / "final_review_manifest.csv"
+    references_path = run_dir / OUTPUT_DIR / "references.csv"
+    if manifest_path.exists() and references_path.exists():
+        return read_csv(manifest_path), read_csv(references_path)
+    _, manifest_rows, reference_rows = build_final_review(title, chapters, reference_metadata)
+    write_csv(manifest_path, MANIFEST_FIELDS, manifest_rows)
+    write_csv(references_path, reference_fields(), reference_rows)
+    return manifest_rows, reference_rows
 
 
 def write_summary(

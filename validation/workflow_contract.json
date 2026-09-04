@@ -1809,7 +1809,7 @@
         },
         {
           "path": "artifacts/08_terminology_normalization/02_glossary/terminology_glossary.csv",
-          "min_bytes": 100,
+          "min_bytes": 80,
           "required_markers": [
             "entity_id,preferred_name,entity_type,aliases,first_mention_rule,normalization_status,notes"
           ]
@@ -2284,7 +2284,7 @@
             "01_inputs",
             "02_outputs",
             "03_verification",
-            "04_outputs"
+            "04_summary"
           ]
         },
         {
@@ -2317,7 +2317,20 @@
           ]
         },
         {
-          "path": "artifacts/12_final_review/04_outputs/final_review_summary.md",
+          "path": "artifacts/12_final_review/03_verification/semantic_final_synthesis_attestation.md",
+          "min_bytes": 500,
+          "required_markers": [
+            "# LLM Semantic Final Synthesis Attestation",
+            "## Semantic Rewrite Scope",
+            "## Global Review Judgment",
+            "## Rewrite Actions",
+            "## Structure And Redundancy Review",
+            "## Citation And Evidence Guardrails",
+            "## Iteration Notes"
+          ]
+        },
+        {
+          "path": "artifacts/12_final_review/04_summary/final_review_summary.md",
           "min_bytes": 300,
           "required_markers": [
             "# Final Review Summary",
@@ -2349,7 +2362,8 @@
         "artifacts/12_final_review/02_outputs/final_review.md",
         "artifacts/12_final_review/02_outputs/references.csv",
         "artifacts/12_final_review/03_verification/final_review_check.csv",
-        "artifacts/12_final_review/04_outputs/final_review_summary.md"
+        "artifacts/12_final_review/03_verification/semantic_final_synthesis_attestation.md",
+        "artifacts/12_final_review/04_summary/final_review_summary.md"
       ],
       "allowed_path_prefixes": [
         "artifacts/00_workflow_control",

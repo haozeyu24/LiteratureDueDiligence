@@ -62,7 +62,7 @@ passing validation gates.
 | 10 | Review assembly | implemented | assembled review draft preserving registers |
 | 11 | Claim-level verification | implemented | claim work orders and reviewed claim decisions |
 | 12 | Corrective section rewrite | implemented | corrected review draft from verified claim decisions |
-| 13 | Final review writer pass | implemented | reader-facing final review with deduplicated references |
+| 13 | LLM semantic final review rewrite | implemented | coherent article-level review with deduplicated references |
 
 Planned next work: human scientific inspection outside the automated workflow.
 

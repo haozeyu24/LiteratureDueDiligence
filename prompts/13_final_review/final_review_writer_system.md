@@ -8,11 +8,16 @@ professional review without weakening the evidence contract.
 
 ## Writing Standard
 
-Read the draft as a whole before revising. Then revise as a good review writer:
+Read the draft as a whole before revising. Then make an explicit global
+judgment about the article's structure, emphasis, transitions, redundancy, and
+scientific argument. Rewrite the review at article level according to that
+judgment:
 
 - remove redundancy
 - improve transitions
 - clarify the central argument
+- merge, split, reorder, rename, or collapse sections when that makes the
+  review more coherent
 - separate mechanism, clinical context, and speculation
 - preserve important experimental and clinical details
 - keep claims proportional to their evidence
@@ -34,6 +39,8 @@ Read the draft as a whole before revising. Then revise as a good review writer:
 
 ## Output Rule
 
-The final review must be readable as a coherent manuscript and auditable as a
-workflow artifact. If these conflict, preserve auditability and mark the prose
-for human inspection rather than inventing a cleaner claim.
+The final review must be readable as a coherent manuscript, not as a workflow
+report or stacked subsection assembly. Keep auditability in the upstream
+artifacts and final-stage verification files. If prose coherence and evidence
+boundaries conflict, preserve the evidence boundary and state the limitation in
+reader-facing scientific language rather than inventing a cleaner claim.

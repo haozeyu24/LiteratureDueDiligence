@@ -129,6 +129,24 @@ When auditing an already advanced run, add `--allow-later-steps` so the
 validator still checks the selected step while accepting declared downstream
 artifacts.
 
+LLM-authored prose stages require iterative validation, not a single write.
+After the first generated output, run the stage validator, inspect any failed
+checks or visibly weak prose, revise the output, and rerun validation until the
+stage passes. This applies especially to:
+
+- Stage 2 initial review draft, where the output must be a useful retrieval and
+  verification scaffold rather than a polished but ungrounded essay.
+- Stage 8 subsection rewrite, where every cited claim must remain traceable to
+  packet papers and every packet paper must be triaged.
+- Stage 13 final review, where the output must read as a real biomedical review
+  article rather than a workflow report.
+
+Validation for reader-facing prose should reject machine-scaffold language,
+generic placeholders, leaked internal IDs, and audit-oriented text in the main
+review. If a deterministic formatter produces a technically valid but awkward
+reader-facing draft, the final writer must perform additional polish cycles and
+validate again before stopping.
+
 The declarative contract lives at `validation/workflow_contract.json`.
 
 ## Workflow Stages
@@ -920,14 +938,18 @@ Output:
 - `artifacts/11_corrective_rewrite/03_verification/corrective_rewrite_check.csv`
 - `artifacts/11_corrective_rewrite/04_outputs/corrective_rewrite_summary.md`
 
-### 13. Global Review Rewrite
+### 13. LLM Semantic Global Review Rewrite
 
 Create the reader-facing final review from the corrected draft. This is the
-terminal automated writing stage. It should behave like a professional review
-writer: read the full draft, reduce redundancy, improve flow, preserve
-mechanistic and clinical detail, keep confidence proportional to evidence, and
-replace workflow paper IDs with numbered citations plus a deduplicated
-reference list.
+terminal automated writing stage and must include an LLM-based semantic global
+synthesis pass. Deterministic scripts may prepare citation conversion,
+reference deduplication, manifests, and checks, but they are helpers rather than
+the writing authority. The final writer must read the almost-final material as a
+whole article, make an explicit global judgment about the review's organization
+and argument, rewrite the review at article level, reduce redundancy, improve
+flow, preserve mechanistic and clinical detail, keep confidence proportional to
+evidence, and replace workflow paper IDs with numbered citations plus a
+deduplicated reference list.
 
 Preflight:
 
@@ -935,16 +957,42 @@ Preflight:
 python3 tools/00_workflow_control/validate_step.py corrective_rewrite runs/<run_id> --allow-later-steps
 ```
 
-Create and validate the final review:
+Create, semantically rewrite, polish, and validate the final review:
 
 ```bash
 python3 tools/13_final_review/finalize_review.py runs/<run_id>
+python3 tools/13_final_review/finalize_review.py runs/<run_id> --refresh-checks
 python3 tools/00_workflow_control/validate_step.py final_review runs/<run_id>
 ```
+
+Before final validation can pass, the LLM final writer must write
+`artifacts/12_final_review/03_verification/semantic_final_synthesis_attestation.md`.
+This attestation documents that the writer reviewed the corrected draft,
+reference list, and verification artifacts semantically as a whole review. It
+must explain the global review judgment, what was rewritten, how the final
+structure, redundancy handling, citation guardrails, and polish iterations were
+handled. The final structure does not need to match the previous subsection
+count: sections may be merged, split, reordered, or collapsed when doing so
+makes the review more coherent without deleting substantive evidence or
+uncertainty.
+
+If validation fails, or if the generated review still reads like workflow
+scaffolding rather than a publishable biomedical review, revise the final review
+and rerun validation. Repeat until the final output satisfies both scientific
+traceability and reader-facing prose quality.
 
 Generic rules:
 
 - Improve readability and professional review structure.
+- Perform an LLM semantic global synthesis pass over the whole almost-final
+  review; do not simply concatenate or lightly clean up rewritten subsections.
+- Make an explicit global judgment about whether the article reads as a
+  coherent review, then rewrite the final draft according to that judgment.
+- Let the final section structure follow the article-level argument. It may
+  differ from the upstream subsection structure.
+- Use a topic-specific title and abstract. Do not use generic phrasing such as
+  "user-defined topic", "verified evidence for the workflow", "audit
+  artifacts", or "human inspection" in the reader-facing review.
 - Remove redundancy without deleting substantive evidence or uncertainty.
 - Preserve traceability by converting workflow paper IDs into numbered
   citations and writing a deduplicated reference list.
@@ -961,8 +1009,9 @@ Output:
 - `artifacts/12_final_review/01_inputs/final_review_manifest.csv`
 - `artifacts/12_final_review/02_outputs/final_review.md`
 - `artifacts/12_final_review/02_outputs/references.csv`
+- `artifacts/12_final_review/03_verification/semantic_final_synthesis_attestation.md`
 - `artifacts/12_final_review/03_verification/final_review_check.csv`
-- `artifacts/12_final_review/04_outputs/final_review_summary.md`
+- `artifacts/12_final_review/04_summary/final_review_summary.md`
 
 ### 14. Human Scientific Inspection
 
