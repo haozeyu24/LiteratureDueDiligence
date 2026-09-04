@@ -231,7 +231,10 @@ def validate_review_row(row: dict[str, str], row_label: str, errors: list[str]) 
         errors.append(f"invalid synthesis_role on {row_label}")
     for field in REQUIRED_REVIEW_FIELDS:
         value = row.get(field, "").strip()
-        if not value or value in {"unknown", "not_reviewed"}:
+        unfilled_values = {"unknown", "not_reviewed"}
+        if field == "synthesis_role":
+            unfilled_values = {"unknown", "not_reviewed"}
+        if not value or value in unfilled_values:
             errors.append(f"{field} is not filled on {row_label}")
     if row.get("review_method", "").strip() != "llm_semantic_reading":
         errors.append(

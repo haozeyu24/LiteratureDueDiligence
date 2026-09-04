@@ -35,17 +35,19 @@ Use the `raglab` retrieval-oriented pattern:
 
 Stage 6 requires `OPENAI_API_KEY` because the semantic index uses
 `text-embedding-3-small`. If the key is missing, stop and ask the user to add it
-to the repository-root `.env` file or provide an explicit `--env-file` path. Do
-not continue to downstream retrieval or rewriting without a completed vector
-index.
+to the shell environment or provide an explicit `--env-file` path, preferably to
+a private env file outside the repository. Do not continue to downstream
+retrieval or rewriting without a completed vector index.
 
-The recommended repository-root setup is:
+Recommended private env-file setup:
 
 ```bash
-cp .env.example .env
+mkdir -p ~/.config/literature-due-diligence
+cp .env.example ~/.config/literature-due-diligence/env
+chmod 600 ~/.config/literature-due-diligence/env
 ```
 
-Then edit `.env` so it contains:
+Then edit `~/.config/literature-due-diligence/env` so it contains:
 
 ```text
 OPENAI_API_KEY=sk-your-key-here
@@ -56,7 +58,7 @@ OPENAI_API_KEY=sk-your-key-here
 Run:
 
 ```bash
-python3 tools/06_full_text_rag_index/build_full_text_rag_index.py runs/<run_id> --env-file .env
+python3 tools/06_full_text_rag_index/build_full_text_rag_index.py runs/<run_id> --env-file ~/.config/literature-due-diligence/env
 ```
 
 This creates a complete chunk manifest, BM25 index, and Qdrant vector index.

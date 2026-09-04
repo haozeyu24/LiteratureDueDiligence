@@ -37,7 +37,12 @@ The draft must be organized into chapters and subsections.
 The draft should be expansive. Unless `run_config.md` says otherwise, aim for:
 
 - at least 6 chapters
-- at least 18 substantive subsections
+- enough substantive subsections to separately cover the major entities,
+  mechanisms, evidence classes, and clinical contexts in the structured
+  instruction
+- for broad prompts without a user-specified paper count, roughly 2-4
+  substantive subsections per chapter, with at least 2 substantive subsections
+  per chapter
 - at least 150 words of prose per substantive subsection
 - at least 2 prose paragraphs per substantive subsection
 - at least 4 citation-register rows per substantive subsection

@@ -96,12 +96,11 @@ For each subsection, create stringent PubMed queries using:
 - family analog or adjacent mechanism terms only when the structured instruction
   allows them.
 
-Every subsection must have at least:
-
-- one `high_precision` query;
-- one `mechanism_expansion` query;
-- one `context_expansion` query;
-- one `recall_guard` query.
+Replace each scaffolded `semantic_seed` row with real initial query intents,
+choosing the number the subsection semantically needs. A narrow or simple
+subsection may need a small number of queries; complex subsections with
+multiple entities, mechanisms, models, interventions, or citation-recall needs
+may need more.
 
 The subsection title is an orientation signal only. Query construction must be
 driven primarily by subsection prose, citation-register notes, and citation
@@ -112,11 +111,15 @@ entities, mechanisms, assays, contexts, and synonyms when this improves recall.
 
 Optional query types:
 
+- `primary_mechanism`
+- `clinical_context`
+- `citation_recall`
+- `model_or_assay`
 - `synonym_expansion`
 - `mechanism_expansion`
-- `clinical_context`
 - `negative_or_failed_result`
-- `manual_lookup`
+- `combination_rationale`
+- `biomarker_context`
 
 ## Count-Based Query Control
 
@@ -125,25 +128,25 @@ After a query is run or estimated, classify result count as:
 - `too_many`
 - `acceptable`
 - `too_few`
-- `needs_manual_search`
 
-Default one-subsection count heuristics:
+Default per-query count heuristics:
 
 - `0`: usually too few.
-- `1-5`: usually too narrow unless key draft citations are recovered and the
+- `1-4`: usually too narrow unless key draft citations are recovered and the
   subsection is intrinsically sparse.
-- `6-200`: usually acceptable for LLM semantic abstract review.
-- `201-500`: collect a labeled top-relevance sample and refine only if sampled
-  abstracts are mostly semantic noise.
-- `>500`: usually too many unless the subsection is intentionally broad.
+- `5-100`: target band for LLM semantic abstract review.
+- `101-110`: acceptable tolerance when the query is semantically specific.
+- `>110`: too many; collect only a diagnostic sample and redesign the query
+  keywords before using that query as retrieval coverage.
 
 When result count is too high, refine by mechanism, assay, therapy, disease,
 population, molecular alteration, endpoint, or exact phrase. Do not refine
 merely because the set is larger than a human would want to read manually; the
 LLM abstract-review stage is expected to narrow medium-sized sets.
 
-When result count is too low, broaden synonyms, remove excessive filters, use
-related family members when allowed, or create a manual lookup task.
+When result count is too low, semantically redesign the query by broadening
+synonyms, removing excessive filters, or using related family members when
+allowed.
 
 For each query, write diagnostics with raw hit count, collected count, sampled
 precision when sampled, dominant noise classes, missing concepts, recall
@@ -210,7 +213,6 @@ decision:
 - `recovered`
 - `recover_with_targeted_query`
 - `drop_as_unverified_or_wrong`
-- `keep_for_manual_lookup`
 - `defer_to_full_text_step`
 
 ## Full-Text Routing

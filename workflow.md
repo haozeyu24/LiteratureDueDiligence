@@ -178,9 +178,13 @@ draft access status, venue trust label, discovery provenance, evidence role, and
 notes for later agents.
 
 The draft should also be expansive. Unless the run config overrides this, the
-initial draft should include at least 6 chapters, at least 18 substantive
-subsections, at least 150 words and 2 prose paragraphs per substantive
-subsection, and at least 4 citation-register rows per substantive subsection.
+initial draft should use enough substantive subsections to separately cover the
+major entities, mechanisms, evidence classes, and clinical contexts in the
+structured instruction. For broad prompts without a user-specified paper count,
+aim for roughly 2-4 substantive subsections per chapter, with at least 6
+chapters, at least 2 substantive subsections per chapter, at least 150 words and
+2 prose paragraphs per substantive subsection, and at least 4 citation-register
+rows per substantive subsection.
 When the drafting agent cannot confidently name enough real citations, it should
 add `citation needed` rows with `PMID` and `DOI` set to `unknown` and notes
 describing what later PubMed retrieval should search for.
@@ -322,8 +326,8 @@ python3 tools/00_workflow_control/validate_step.py semantic_abstract_review_pref
 ```
 
 This preflight must pass. It blocks the next step when any subsection still has
-`query_revision_needed`, `manual_search_needed`, `blocked`, `not_run`, or any
-status other than `abstract_review_needed`.
+`query_revision_needed`, `blocked`, `not_run`, or any status other than
+`abstract_review_needed`.
 
 Semantic abstract review is the primary precision filter. It reads each
 subsection and its candidate PubMed titles/abstracts, compares each abstract
@@ -549,12 +553,12 @@ Borrowed `raglab` design choices:
 Run:
 
 ```bash
-python3 tools/06_full_text_rag_index/build_full_text_rag_index.py runs/<run_id> --env-file .env
+python3 tools/06_full_text_rag_index/build_full_text_rag_index.py runs/<run_id> --env-file ~/.config/literature-due-diligence/env
 ```
 
 If `OPENAI_API_KEY` is missing, the agent must stop and ask the user to add an
-API key. The workflow does not continue past Stage 6 without a completed vector
-index.
+API key through the shell environment or an explicit private env file. The
+workflow does not continue past Stage 6 without a completed vector index.
 
 Validation:
 
@@ -600,7 +604,7 @@ address the subsection.
 Required action:
 
 ```bash
-python3 tools/07_subsection_rag_retrieval/build_subsection_rag_retrieval.py runs/<run_id> --env-file .env
+python3 tools/07_subsection_rag_retrieval/build_subsection_rag_retrieval.py runs/<run_id> --env-file ~/.config/literature-due-diligence/env
 ```
 
 Validation:

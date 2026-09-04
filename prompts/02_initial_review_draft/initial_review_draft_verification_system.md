@@ -24,9 +24,12 @@ Verify that:
 - the draft contains an executive summary
 - chapters and subsections are present
 - the draft is expansive enough for downstream RAG and verification
-- unless overridden by `run_config.md`, the draft has at least 6 chapters, at
-  least 18 substantive subsections, and at least 4 citation-register rows per
-  substantive subsection
+- unless overridden by `run_config.md`, the draft has at least 6 chapters,
+  enough substantive subsections to separately cover the major entities,
+  mechanisms, evidence classes, and clinical contexts in the structured
+  instruction, at least 2 substantive subsections per chapter for broad
+  unspecified prompts, and at least 4 citation-register rows per substantive
+  subsection
 - unless overridden by `run_config.md`, each substantive subsection has at least
   150 words and at least 2 prose paragraphs before its citation register
 - every substantive subsection has a `#### Citation Register`

@@ -8,7 +8,9 @@
 - `paper_count_target`: `as_many_relevant_as_practical_unless_user_specified`
 - `initial_draft_expansion_policy`: `expansive_topic_map`
 - `min_initial_draft_chapters`: `6`
-- `min_initial_draft_subsections`: `18`
+- `initial_draft_subsection_policy`: `cover_major_entities_mechanisms_evidence_classes_and_clinical_contexts`
+- `target_subsections_per_chapter_when_broad_unspecified`: `2-4`
+- `min_initial_draft_subsections`: `adaptive_minimum_2_per_chapter`
 - `min_words_per_substantive_subsection`: `150`
 - `min_paragraphs_per_substantive_subsection`: `2`
 - `min_citation_register_rows_per_subsection`: `4`
@@ -51,7 +53,8 @@
 - `min_initial_draft_chapters`
   - any positive integer
 - `min_initial_draft_subsections`
-  - any positive integer
+  - `adaptive_minimum_2_per_chapter`
+  - any positive integer requested or justified by the run
 - `min_words_per_substantive_subsection`
   - any positive integer
 - `min_paragraphs_per_substantive_subsection`

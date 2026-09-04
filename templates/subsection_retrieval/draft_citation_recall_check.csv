@@ -1,2 +1,2 @@
 subsection_id,citation_id,citation,PMID,DOI,discovery_provenance,found_in_final_set,controller_decision,notes
-SUB001,S01-C001,Author et al.,123456,unknown,llm_memory,unknown,keep_for_manual_lookup,Template row.
+SUB001,S01-C001,Author et al.,123456,unknown,llm_memory,unknown,recover_with_targeted_query,Template row.

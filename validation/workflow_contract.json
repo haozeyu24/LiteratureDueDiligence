@@ -299,11 +299,10 @@
           "path": "artifacts/02_subsection_retrieval/02_queries/query_plan.csv",
           "min_bytes": 150,
           "required_markers": [
-            "subsection_id,query_id,query_type,pubmed_query,required_terms,optional_terms,excluded_terms,expected_result_band,recall_targets,query_rationale",
-            "high_precision",
-            "mechanism_expansion",
-            "context_expansion",
-            "recall_guard"
+            "subsection_id,query_id,query_type,pubmed_query,required_terms,optional_terms,excluded_terms,expected_result_band,recall_targets",
+            "semantic_evidence_need",
+            "semantic_query_design_status",
+            "semantic_query_designer"
           ]
         },
         {
@@ -407,7 +406,6 @@
           "required_markers": [
             "# PubMed Query Execution Report",
             "## Overall Status",
-            "`pass`",
             "## Metadata Store",
             "## Subsection Counts",
             "## Next Step"
@@ -431,6 +429,7 @@
         "artifacts/02_subsection_retrieval/01_scope/subsection_manifest.csv",
         "artifacts/02_subsection_retrieval/02_queries/controller_policy.md",
         "artifacts/02_subsection_retrieval/02_queries/abstract_review_rule.md",
+        "artifacts/02_subsection_retrieval/02_queries/semantic_query_design_work_order.md",
         "artifacts/02_subsection_retrieval/02_queries/query_plan.csv",
         "artifacts/02_subsection_retrieval/02_queries/query_diagnostics.csv",
         "artifacts/02_subsection_retrieval/03_pubmed/pubmed_records.jsonl",

@@ -92,20 +92,21 @@ policy lives in [policy.md](policy.md).
 Most stages are file-based and do not need an API key. Stage 6 requires an
 OpenAI API key because it builds embeddings with `text-embedding-3-small`.
 
-Create a local `.env` file at the repository root:
+Create a local env file:
 
 ```bash
-cp .env.example .env
+mkdir -p ~/.config/literature-due-diligence
+touch ~/.config/literature-due-diligence/env
 ```
 
-Then edit `.env`:
+Then edit `~/.config/literature-due-diligence/env`:
 
-```text
+```bash
 OPENAI_API_KEY=sk-your-key-here
 ```
 
-The real `.env` file is ignored by git. Do not commit it. If `OPENAI_API_KEY`
-is missing, Stage 6 must stop and ask the user to provide one.
+Do not commit env files or API keys. If `OPENAI_API_KEY` is missing, Stage 6
+must stop and ask the user to provide one.
 
 Cost should be modest for normal review-scale corpora. As of 2026-09-03,
 `text-embedding-3-small` is listed at `$0.02 per 1M input tokens`. A rough

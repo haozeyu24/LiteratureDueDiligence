@@ -34,6 +34,10 @@ NCBI_RATE_LIMIT_SECONDS = 0.34
 USER_AGENT = "LiteratureDueDiligence/0.1 subsection pubmed metadata collector"
 BATCH_SIZE = 100
 TRANSIENT_CURL_EXIT_CODES = {18, 22, 28, 35, 52, 55, 56, 92}
+ACCEPTABLE_MIN_COUNT = 5
+ACCEPTABLE_MAX_COUNT = 110
+MAX_REDESIGNS_PER_QUERY = 3
+MAX_CANDIDATES_PER_SUBSECTION = 600
 
 
 def main() -> int:
@@ -45,7 +49,7 @@ def main() -> int:
         "--retmax-per-query",
         type=int,
         default=200,
-        help="Maximum PMIDs collected per query for abstract-review staging.",
+        help="Maximum PMIDs collected per query for diagnostic sampling and abstract-review staging.",
     )
     args = parser.parse_args()
 
@@ -62,10 +66,16 @@ def main() -> int:
     if not query_rows:
         print(f"ERROR: no query rows found in {query_plan_path}", file=sys.stderr)
         return 1
+    semantic_errors = semantic_query_design_errors(query_rows)
+    if semantic_errors:
+        for error in semantic_errors:
+            print(f"ERROR: {error}", file=sys.stderr)
+        return 1
 
-    query_results: dict[str, dict[str, object]] = {}
-    pmid_sources: dict[str, dict[str, set[str]]] = {}
-    for row in query_rows:
+    query_results, pmid_sources = load_existing_query_results(run_dir, query_rows)
+    existing_query_ids = {row.get("query_id", "").strip() for row in query_rows}
+    executed_query_rows = rows_requiring_execution(query_rows, query_results)
+    for row in executed_query_rows:
         query_id = row["query_id"].strip()
         subsection_id = row["subsection_id"].strip()
         query = row["pubmed_query"].strip()
@@ -75,14 +85,27 @@ def main() -> int:
             "pmids": pmids,
             "raw_count": raw_count,
             "truncated": raw_count > len(pmids),
+            "next_query_ids": child_query_ids(query_rows, query_id),
         }
-        for pmid in pmids:
-            source = pmid_sources.setdefault(
-                pmid, {"query_ids": set(), "subsection_ids": set()}
-            )
-            source["query_ids"].add(query_id)
-            source["subsection_ids"].add(subsection_id)
+        if count_status(raw_count) != "too_many":
+            for pmid in pmids:
+                source = pmid_sources.setdefault(
+                    pmid, {"query_ids": set(), "subsection_ids": set()}
+                )
+                source["query_ids"].add(query_id)
+                source["subsection_ids"].add(subsection_id)
         time.sleep(NCBI_RATE_LIMIT_SECONDS)
+    pending_redesign_rows = stage_redesign_rows_for_bad_query_counts(
+        query_rows, query_results, existing_query_ids
+    )
+    query_rows.extend(pending_redesign_rows)
+    result_query_rows = [
+        row
+        for row in query_rows
+        if row.get("query_id", "").strip() in query_results
+    ]
+
+    write_csv(query_plan_path, query_rows)
 
     records = fetch_pubmed_records(sorted(pmid_sources))
     for record in records:
@@ -101,8 +124,8 @@ def main() -> int:
     records_by_pmid = {record["pmid"]: record for record in records}
     write_pubmed_records_jsonl(run_dir / PUBMED_DIR / "pubmed_records.jsonl", records)
     write_pubmed_record_index(run_dir / PUBMED_DIR / "pubmed_record_index.csv", records)
-    write_query_diagnostics(run_dir / QUERY_DIR / "query_diagnostics.csv", query_rows, query_results)
-    write_iteration_log(run_dir / QUERY_DIR / "search_iteration_log.csv", query_rows, query_results)
+    write_query_diagnostics(run_dir / QUERY_DIR / "query_diagnostics.csv", result_query_rows, query_results)
+    write_iteration_log(run_dir / QUERY_DIR / "search_iteration_log.csv", result_query_rows, query_results)
     write_triage_tables(run_dir / SCREENING_DIR, query_results, records_by_pmid)
     write_recall_check(run_dir / RECALL_DIR / "draft_citation_recall_check.csv", records_by_pmid)
     write_final_literature_sets(
@@ -110,13 +133,29 @@ def main() -> int:
     )
     write_full_text_queue(run_dir / OUTPUT_DIR / "full_text_download_queue.csv", query_results, records_by_pmid)
     write_metrics(run_dir / ARTIFACT_DIR, query_rows, query_results)
-    write_report(run_dir / QUERY_DIR / "query_execution_report.md", query_rows, query_results, len(records))
-    update_sqlite(run_dir, query_rows, query_results, records)
-    update_check(run_dir / OUTPUT_DIR / "subsection_retrieval_check.md", len(records))
+    write_report(
+        run_dir / QUERY_DIR / "query_execution_report.md",
+        query_rows,
+        query_results,
+        len(records),
+        len(pending_redesign_rows),
+        len(executed_query_rows),
+    )
+    update_sqlite(run_dir, result_query_rows, query_results, records)
+    update_check(
+        run_dir / OUTPUT_DIR / "subsection_retrieval_check.md",
+        len(records),
+        len(pending_redesign_rows),
+    )
 
     print(
-        f"Ran {len(query_rows)} PubMed queries and stored {len(records)} unique PubMed records."
+        f"Ran {len(executed_query_rows)} PubMed queries and stored {len(records)} unique PubMed records."
     )
+    if pending_redesign_rows:
+        print(
+            f"Staged {len(pending_redesign_rows)} query-redesign work-order rows; "
+            "an LLM must semantically redesign them before execution."
+        )
     print(f"Wrote local metadata to {run_dir / PUBMED_DIR / 'pubmed_records.jsonl'}")
     print(f"Updated SQLite at {run_dir / 'artifacts/00_workflow_control/01_state/workflow_state.sqlite'}")
     return 0
@@ -127,14 +166,191 @@ def read_csv(path: Path) -> list[dict[str, str]]:
         return list(csv.DictReader(handle))
 
 
+def load_existing_query_results(
+    run_dir: Path, query_rows: list[dict[str, str]]
+) -> tuple[dict[str, dict[str, object]], dict[str, dict[str, set[str]]]]:
+    query_by_id = {row.get("query_id", ""): row for row in query_rows}
+    query_results: dict[str, dict[str, object]] = {}
+    pmid_sources: dict[str, dict[str, set[str]]] = {}
+    pmids_by_query: dict[str, set[str]] = {}
+    records_path = run_dir / PUBMED_DIR / "pubmed_records.jsonl"
+    if records_path.exists():
+        with records_path.open(encoding="utf-8") as handle:
+            for line in handle:
+                if not line.strip():
+                    continue
+                record = json.loads(line)
+                pmid = str(record.get("pmid", "")).strip()
+                if not pmid:
+                    continue
+                query_ids = {str(value) for value in record.get("source_query_ids", [])}
+                subsection_ids = {str(value) for value in record.get("subsection_ids", [])}
+                pmid_sources[pmid] = {
+                    "query_ids": set(query_ids),
+                    "subsection_ids": set(subsection_ids),
+                }
+                for query_id in query_ids:
+                    pmids_by_query.setdefault(query_id, set()).add(pmid)
+
+    diagnostics_path = run_dir / QUERY_DIR / "query_diagnostics.csv"
+    if not diagnostics_path.exists():
+        return query_results, pmid_sources
+    next_query_ids_by_query: dict[str, list[str]] = {}
+    iteration_path = run_dir / QUERY_DIR / "search_iteration_log.csv"
+    if iteration_path.exists():
+        for row in read_csv(iteration_path):
+            query_id = row.get("query_id", "").strip()
+            if not query_id:
+                continue
+            next_query_ids_by_query[query_id] = [
+                value.strip()
+                for value in row.get("next_query_id", "").split(";")
+                if value.strip() and value.strip() != "controller_to_assign"
+            ]
+    for diagnostic in read_csv(diagnostics_path):
+        query_id = diagnostic.get("query_id", "").strip()
+        row = query_by_id.get(query_id)
+        if not row:
+            continue
+        if diagnostic.get("query", "").strip() != row.get("pubmed_query", "").strip():
+            continue
+        raw_count = numeric_count(diagnostic.get("raw_hit_count", ""))
+        if raw_count is None:
+            continue
+        query_results[query_id] = {
+            "row": row,
+            "pmids": sorted(pmids_by_query.get(query_id, set())),
+            "raw_count": raw_count,
+            "truncated": diagnostic.get("truncated_by_constraint") == "true",
+            "next_query_ids": next_query_ids_by_query.get(query_id, []),
+        }
+    return query_results, pmid_sources
+
+
+def numeric_count(value: str) -> int | None:
+    value = str(value).strip()
+    if not value.isdigit():
+        return None
+    return int(value)
+
+
+def rows_requiring_execution(
+    query_rows: list[dict[str, str]], query_results: dict[str, dict[str, object]]
+) -> list[dict[str, str]]:
+    return [
+        row
+        for row in query_rows
+        if row.get("query_id", "").strip() not in query_results
+    ]
+
+
+def stage_redesign_rows_for_bad_query_counts(
+    query_rows: list[dict[str, str]],
+    query_results: dict[str, dict[str, object]],
+    existing_query_ids: set[str],
+) -> list[dict[str, str]]:
+    staged: list[dict[str, str]] = []
+    for row in query_rows:
+        query_id = row.get("query_id", "").strip()
+        result = query_results.get(query_id)
+        if not result:
+            continue
+        if count_status(int(result["raw_count"])) == "acceptable":
+            continue
+        if child_query_ids(query_rows, query_id):
+            continue
+        redesigned_rows = [
+            redesigned
+            for redesigned in redesign_queries_for_count(row, int(result["raw_count"]))
+            if redesigned["query_id"] not in existing_query_ids
+        ]
+        for redesigned in redesigned_rows:
+            existing_query_ids.add(redesigned["query_id"])
+        if redesigned_rows:
+            result["next_query_ids"] = result.get("next_query_ids", []) + [
+                redesigned["query_id"] for redesigned in redesigned_rows
+            ]
+        staged.extend(redesigned_rows)
+    return staged
+
+
+def child_query_ids(query_rows: list[dict[str, str]], parent_query_id: str) -> list[str]:
+    return [
+        candidate.get("query_id", "").strip()
+        for candidate in query_rows
+        if candidate.get("redesign_parent_query_id", "").strip() == parent_query_id
+    ]
+
+
 def write_csv(path: Path, rows: list[dict[str, object]], fieldnames: list[str] | None = None) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     if fieldnames is None:
-        fieldnames = list(rows[0].keys()) if rows else []
+        fieldnames = []
+        for row in rows:
+            for key in row:
+                if key not in fieldnames:
+                    fieldnames.append(key)
     with path.open("w", newline="", encoding="utf-8") as handle:
         writer = csv.DictWriter(handle, fieldnames=fieldnames, extrasaction="ignore")
         writer.writeheader()
         writer.writerows(rows)
+
+
+def semantic_query_design_errors(query_rows: list[dict[str, str]]) -> list[str]:
+    required_fields = {
+        "semantic_evidence_need",
+        "semantic_entity_terms",
+        "semantic_mechanism_terms",
+        "semantic_endpoint_or_context_terms",
+        "query_false_positive_risks",
+        "semantic_query_design_status",
+        "semantic_query_designer",
+    }
+    errors: list[str] = []
+    if not query_rows:
+        return ["query_plan.csv has no query rows"]
+    missing_fields = sorted(required_fields - set(query_rows[0]))
+    if missing_fields:
+        errors.append(
+            "query_plan.csv is missing semantic query-design fields: "
+            + ", ".join(missing_fields)
+        )
+        return errors
+    acceptable_status_by_type = {
+        "query_redesign": {"llm_semantic_redesigned"},
+    }
+    for row in query_rows:
+        query_id = row.get("query_id", "unknown")
+        status = row.get("semantic_query_design_status", "").strip()
+        accepted_statuses = acceptable_status_by_type.get(
+            row.get("query_type", ""), {"llm_semantic_designed"}
+        )
+        if status not in accepted_statuses:
+            errors.append(
+                f"{query_id} is not LLM semantic-designed for execution; "
+                f"semantic_query_design_status={status or 'missing'}"
+            )
+        for field in sorted(required_fields - {"semantic_query_design_status"}):
+            value = row.get(field, "").strip()
+            if not value or value in {
+                "unknown",
+                "unassigned",
+                "needs_llm_semantic_design",
+                "needs_llm_semantic_redesign",
+            }:
+                errors.append(f"{query_id} has unfilled semantic query-design field: {field}")
+        rationale = row.get("query_rationale", "").lower()
+        if "heuristic seed only" in rationale or "work-order seed" in rationale:
+            errors.append(f"{query_id} still has heuristic-seed rationale")
+        if row.get("query_type") == "query_redesign":
+            for field in (
+                "redesign_parent_query_id",
+                "redesign_trigger_count_status",
+                "redesign_semantic_work_order",
+            ):
+                if not row.get(field, "").strip():
+                    errors.append(f"{query_id} has unfilled redesign provenance field: {field}")
+    return errors
 
 
 def fetch_url(url: str) -> bytes:
@@ -320,34 +536,347 @@ def paper_id_from_pmid(pmid: str) -> str:
     return f"pmid-{pmid.strip()}" if pmid else ""
 
 
+def quote_term(term: str) -> str:
+    escaped = term.replace('"', "").strip()
+    if re.search(r"[^A-Za-z0-9]", escaped):
+        return f'"{escaped}"[Title/Abstract]'
+    return f'{escaped}[Title/Abstract]'
+
+
+def or_group(terms: list[str]) -> str:
+    unique = list(dict.fromkeys(term for term in terms if term))
+    if not unique:
+        return ""
+    if len(unique) == 1:
+        return quote_term(unique[0])
+    return "(" + " OR ".join(quote_term(term) for term in unique) + ")"
+
+
+def and_join(parts: list[str]) -> str:
+    return " AND ".join(part for part in parts if part)
+
+
 def count_status(raw_count: int) -> str:
     if raw_count == 0:
         return "too_few"
-    if raw_count <= 5:
+    if raw_count < ACCEPTABLE_MIN_COUNT:
         return "too_few"
-    if raw_count <= 200:
+    if raw_count <= ACCEPTABLE_MAX_COUNT:
         return "acceptable"
-    if raw_count <= 500:
-        return "too_many"
     return "too_many"
 
 
 def controller_action(raw_count: int) -> str:
     if raw_count == 0:
-        return "broaden_query"
-    if raw_count <= 5:
-        return "broaden_query"
-    if raw_count <= 200:
+        return "redesign_query_keywords"
+    if raw_count < ACCEPTABLE_MIN_COUNT:
+        return "redesign_query_keywords"
+    if raw_count <= ACCEPTABLE_MAX_COUNT:
         return "accept_for_abstract_review"
-    return "refine_query"
+    return "redesign_query_keywords"
 
 
-def subsection_controller_status(candidate_count: int) -> str:
-    if candidate_count == 0:
-        return "manual_search_needed"
-    if candidate_count <= 5:
+def redesign_queries_for_count(row: dict[str, str], raw_count: int) -> list[dict[str, str]]:
+    status = count_status(raw_count)
+    if status == "acceptable":
+        return []
+    terms = query_terms(row)
+    if status == "too_many":
+        queries = tightened_queries(terms)
+        if not queries:
+            queries = semantic_fallback_redesign_queries(row, status)
+        action = "tightened"
+        rationale = (
+            "Redesigned after an overbroad count; diagnostic samples from the parent "
+            "must not be treated as retrieval coverage."
+        )
+        expected = f"{ACCEPTABLE_MIN_COUNT}-{ACCEPTABLE_MAX_COUNT}"
+    else:
+        queries = broadened_queries(terms)
+        if not queries:
+            queries = semantic_fallback_redesign_queries(row, status)
+        action = "broadened"
+        rationale = (
+            "Redesigned after a sparse count; the new query removes brittle constraints "
+            "or broadens closely related keyword variants."
+        )
+        expected = f"{ACCEPTABLE_MIN_COUNT}-{ACCEPTABLE_MAX_COUNT}"
+    rows = []
+    for offset, query in enumerate(queries[:MAX_REDESIGNS_PER_QUERY], start=1):
+        rows.append(
+            {
+                "subsection_id": row["subsection_id"],
+                "query_id": f"{row['query_id']}-R{offset:03d}",
+                "query_type": "query_redesign",
+                "pubmed_query": query,
+                "required_terms": ";".join(terms[:4]),
+                "optional_terms": ";".join(terms[4:]),
+                "excluded_terms": row.get("excluded_terms", ""),
+                "expected_result_band": expected,
+                "recall_targets": row.get("recall_targets", ""),
+                "semantic_evidence_need": row.get("semantic_evidence_need", ""),
+                "semantic_entity_terms": row.get("semantic_entity_terms", ""),
+                "semantic_mechanism_terms": row.get("semantic_mechanism_terms", ""),
+                "semantic_endpoint_or_context_terms": row.get(
+                    "semantic_endpoint_or_context_terms", ""
+                ),
+                "query_false_positive_risks": row.get("query_false_positive_risks", ""),
+                "semantic_query_design_status": "needs_llm_semantic_redesign",
+                "semantic_query_designer": "unassigned",
+                "redesign_parent_query_id": row["query_id"],
+                "redesign_trigger_count_status": status,
+                "redesign_trigger_raw_hit_count": str(raw_count),
+                "redesign_semantic_work_order": (
+                    f"LLM must read the parent subsection evidence need, inspect this "
+                    f"{status} count failure, and semantically {action} the query before execution."
+                ),
+                "query_rationale": (
+                    f"Controller work-order seed for parent {row['query_id']}. {rationale} "
+                    "Not executable until semantic_query_design_status is llm_semantic_redesigned."
+                ),
+            }
+        )
+    return rows
+
+
+def semantic_fallback_redesign_queries(row: dict[str, str], status: str) -> list[str]:
+    """Create a non-manual semantic redesign seed when token extraction is sparse."""
+    entities = semantic_terms(
+        row,
+        [
+            "semantic_entity_terms",
+            "required_terms",
+            "recall_targets",
+        ],
+    )
+    concepts = semantic_terms(
+        row,
+        [
+            "semantic_mechanism_terms",
+            "semantic_endpoint_or_context_terms",
+            "optional_terms",
+            "semantic_evidence_need",
+        ],
+    )
+    false_positive_terms = semantic_terms(row, ["query_false_positive_risks"])
+    queries: list[str] = []
+    if status == "too_many":
+        primary = and_join([or_group(entities[:3]), or_group(concepts[:3])])
+        if primary:
+            queries.append(primary)
+        narrower = and_join(
+            [quote_term(term) for term in (entities[:1] + concepts[:2]) if term]
+        )
+        if narrower:
+            queries.append(narrower)
+        if false_positive_terms and queries:
+            excluded = " NOT " + or_group(false_positive_terms[:3])
+            queries = [query + excluded for query in queries]
+    else:
+        broader = or_group((entities + concepts)[:6])
+        if broader:
+            queries.append(broader)
+        if entities:
+            queries.append(or_group(entities[:4]))
+        if concepts:
+            queries.append(or_group(concepts[:4]))
+    parent_query = row.get("pubmed_query", "").strip()
+    return [
+        query
+        for query in dict.fromkeys(queries)
+        if query and query != parent_query
+    ]
+
+
+def semantic_terms(row: dict[str, str], fields: list[str]) -> list[str]:
+    terms: list[str] = []
+    blocked_values = {
+        "",
+        "unknown",
+        "unassigned",
+        "none",
+        "needs_llm_semantic_design",
+        "needs_llm_semantic_redesign",
+    }
+    for field in fields:
+        value = row.get(field, "")
+        for token in re.split(r"[;,|]", value):
+            term = token.strip().strip(".")
+            lowered = term.lower()
+            if lowered in blocked_values or looks_generic_query_word(term):
+                continue
+            if term and term not in terms:
+                terms.append(term)
+    return terms
+
+
+def query_terms(row: dict[str, str]) -> list[str]:
+    pieces = [
+        row.get("required_terms", ""),
+        row.get("optional_terms", ""),
+        row.get("pubmed_query", ""),
+    ]
+    terms: list[str] = []
+    for piece in pieces:
+        for token in re.findall(r'"([^"]+)"\[Title/Abstract\]|([A-Za-z0-9][A-Za-z0-9+/.-]*)\[Title/Abstract\]|([A-Za-z0-9][A-Za-z0-9+/.-]*)', piece):
+            term = next((part for part in token if part), "").strip().strip(".")
+            if not term:
+                continue
+            lowered = term.lower()
+            if lowered in {"and", "or", "not", "title", "abstract", "pmid"}:
+                continue
+            if lowered in {"title/abstract", "pubmed", "query"}:
+                continue
+            if looks_generic_query_word(term):
+                continue
+            if term not in terms:
+                terms.append(term)
+    return terms
+
+
+def tightened_queries(terms: list[str]) -> list[str]:
+    entities = [
+        term for term in terms if looks_like_entity(term) and not looks_generic_query_word(term)
+    ]
+    concepts = sorted(
+        [term for term in terms if term not in entities and not looks_generic_query_word(term)],
+        key=concept_specificity_score,
+        reverse=True,
+    )
+    if not entities:
+        entities = [term for term in terms if not looks_generic_query_word(term)][:2]
+    if not concepts:
+        concepts = [term for term in terms if term not in entities][:3]
+    queries: list[str] = []
+    for concept in concepts[:5]:
+        for entity in entities[:4]:
+            if entity == concept:
+                continue
+            query = and_join([quote_term(entity), quote_term(concept)])
+            if query and query not in queries:
+                queries.append(query)
+    if len(queries) < MAX_REDESIGNS_PER_QUERY:
+        for entity in entities[:2]:
+            focus = [term for term in concepts if term != entity][:2]
+            query = and_join([quote_term(entity), *[quote_term(term) for term in focus]])
+            if query and query not in queries:
+                queries.append(query)
+    return queries
+
+
+def broadened_queries(terms: list[str]) -> list[str]:
+    non_generic = [term for term in terms if not looks_generic_query_word(term)]
+    entities = [term for term in non_generic if looks_like_entity(term)]
+    concepts = [term for term in non_generic if term not in entities]
+    queries: list[str] = []
+    if entities and concepts:
+        queries.append(and_join([or_group(entities[:3]), or_group(concepts[:3])]))
+    if entities:
+        queries.append(or_group(entities[:4]))
+    if concepts:
+        queries.append(or_group(concepts[:4]))
+    if non_generic:
+        queries.append(or_group(non_generic[:5]))
+    return list(dict.fromkeys(query for query in queries if query))
+
+
+def looks_like_entity(term: str) -> bool:
+    return (
+        term.isupper()
+        or any(char.isdigit() for char in term)
+        or any(char in term for char in "+/")
+        or term.lower().endswith(("inib", "mab"))
+    )
+
+
+def looks_generic_query_word(term: str) -> bool:
+    return term.lower().strip(".") in {
+        "abstract",
+        "activity",
+        "analysis",
+        "clinical",
+        "context",
+        "effect",
+        "effects",
+        "evidence",
+        "expression",
+        "function",
+        "gene",
+        "genes",
+        "mechanism",
+        "mechanisms",
+        "may",
+        "might",
+        "model",
+        "models",
+        "nuclear",
+        "paper",
+        "papers",
+        "protein",
+        "proteins",
+        "ptm",
+        "ptms",
+        "review",
+        "search",
+        "study",
+        "studies",
+        "target",
+        "targets",
+        "that",
+        "region",
+        "regions",
+    }
+
+
+def concept_specificity_score(term: str) -> int:
+    lowered = term.lower().strip(".")
+    score = 0
+    if any(char in term for char in "-+/"):
+        score += 6
+    if any(char.isdigit() for char in term):
+        score += 3
+    if lowered.endswith(("ylation", "ation", "tion", "sion", "ase", "lysis")):
+        score += 3
+    if lowered in {
+        "stability",
+        "turnover",
+        "degradation",
+        "destabilization",
+        "half-life",
+        "localization",
+        "retention",
+        "mobility",
+    }:
+        score += 5
+    if lowered in {"direct", "accumulation", "abundance", "activation", "perturbation"}:
+        score -= 3
+    return score
+
+
+def subsection_controller_status(
+    subsection_id: str,
+    query_rows: list[dict[str, str]],
+    query_results: dict[str, dict[str, object]],
+    candidate_count: int,
+) -> str:
+    rows = [row for row in query_rows if row.get("subsection_id") == subsection_id]
+    if any(
+        row.get("semantic_query_design_status") == "needs_llm_semantic_redesign"
+        for row in rows
+    ):
         return "query_revision_needed"
-    if candidate_count <= 600:
+    if any(row.get("query_id", "").strip() not in query_results for row in rows):
+        return "query_revision_needed"
+    if any(
+        row.get("query_id", "").strip() in query_results
+        and count_status(int(query_results[row["query_id"]]["raw_count"])) != "acceptable"
+        and not child_query_ids(query_rows, row.get("query_id", "").strip())
+        for row in rows
+    ):
+        return "query_revision_needed"
+    if candidate_count == 0:
+        return "query_revision_needed"
+    if candidate_count <= MAX_CANDIDATES_PER_SUBSECTION:
         return "abstract_review_needed"
     return "query_revision_needed"
 
@@ -413,7 +942,7 @@ def write_query_diagnostics(
                 "collected_count": str(len(pmids)),
                 "truncated_by_constraint": "true" if result["truncated"] else "false",
                 "sample_size": str(len(pmids)),
-                "sample_strategy": "all_results" if not result["truncated"] else "top_relevance_sample",
+                "sample_strategy": sample_strategy(raw_count, bool(result["truncated"])),
                 "sampled_on_scope_count": "unknown",
                 "sampled_noise_count": "unknown",
                 "estimated_precision": "unknown",
@@ -438,14 +967,21 @@ def recall_signals(row: dict[str, str], pmids: set[str]) -> str:
 def revision_rationale(raw_count: int, collected: int) -> str:
     if raw_count == 0:
         return "No PubMed records returned; controller should broaden terms or use manual lookup."
-    if raw_count <= 5:
+    if raw_count < ACCEPTABLE_MIN_COUNT:
         return "Sparse result count; controller should broaden unless known draft anchors are recovered."
-    if raw_count <= 200:
+    if raw_count <= ACCEPTABLE_MAX_COUNT:
         return "Result count is suitable for abstract-review staging."
     return (
-        f"Query returned {raw_count} records; {collected} were staged as a top-relevance sample "
-        "and the controller should refine before treating the subsection set as complete."
+        f"Query returned {raw_count} records; {collected} were collected only as a diagnostic sample. "
+        "The controller must redesign query keywords and use acceptable-count redesigned queries "
+        "for abstract-review coverage."
     )
+
+
+def sample_strategy(raw_count: int, truncated: bool) -> str:
+    if count_status(raw_count) == "too_many":
+        return "diagnostic_sample_only"
+    return "all_results" if not truncated else "top_relevance_sample"
 
 
 def write_iteration_log(
@@ -462,17 +998,34 @@ def write_iteration_log(
                 "run_status": "run",
                 "result_count": str(raw_count),
                 "count_status": count_status(raw_count),
-                "controller_action": controller_action(raw_count),
-                "next_query_id": "controller_to_assign" if raw_count == 0 or raw_count <= 5 or raw_count > 200 else "",
+                "controller_action": iteration_controller_action(row, query_results),
+                "next_query_id": ";".join(query_results[row["query_id"]].get("next_query_ids", [])),
                 "notes": revision_rationale(raw_count, len(query_results[row["query_id"]]["pmids"])),
             }
         )
     write_csv(path, rows)
 
 
+def iteration_controller_action(
+    row: dict[str, str], query_results: dict[str, dict[str, object]]
+) -> str:
+    query_id = row.get("query_id", "").strip()
+    result = query_results.get(query_id)
+    if not result:
+        return "run_query_or_estimate_count"
+    status = count_status(int(result["raw_count"]))
+    if status == "acceptable":
+        return "accept_for_abstract_review"
+    if result.get("next_query_ids"):
+        return "redesign_query_keywords"
+    return "redesign_query_keywords"
+
+
 def query_ids_by_subsection(query_results: dict[str, dict[str, object]]) -> dict[str, dict[str, set[str]]]:
     by_subsection: dict[str, dict[str, set[str]]] = {}
     for query_id, result in query_results.items():
+        if count_status(int(result["raw_count"])) == "too_many":
+            continue
         subsection_id = str(result["row"]["subsection_id"])
         for pmid in result["pmids"]:
             by_subsection.setdefault(subsection_id, {}).setdefault(str(pmid), set()).add(query_id)
@@ -532,6 +1085,10 @@ def write_triage_tables(
                 "missing_full_text_reason": "unknown",
                 "triage_actor": "not_started",
                 "synthesis_role": "unknown",
+                "reviewer_id": "not_reviewed",
+                "review_method": "not_reviewed",
+                "reviewer_model_or_agent": "not_reviewed",
+                "reviewed_at": "not_reviewed",
                 "prescreen_hint": "pubmed_candidate",
                 "prescreen_rationale": "Returned by subsection-level PubMed query.",
                 "prescreen_overlap_terms": "unknown",
@@ -553,6 +1110,10 @@ def write_triage_tables(
                 "missing_full_text_reason": "unknown",
                 "promotion_decision": "not_promoted",
                 "synthesis_role": "unknown",
+                "reviewer_id": "not_reviewed",
+                "review_method": "not_reviewed",
+                "reviewer_model_or_agent": "not_reviewed",
+                "reviewed_at": "not_reviewed",
             }
         )
     write_csv(
@@ -583,6 +1144,10 @@ def write_triage_tables(
             "prescreen_hint",
             "prescreen_rationale",
             "prescreen_overlap_terms",
+            "reviewer_id",
+            "review_method",
+            "reviewer_model_or_agent",
+            "reviewed_at",
         ],
     )
     write_csv(
@@ -611,6 +1176,10 @@ def write_triage_tables(
             "missing_full_text_reason",
             "promotion_decision",
             "synthesis_role",
+            "reviewer_id",
+            "review_method",
+            "reviewer_model_or_agent",
+            "reviewed_at",
         ],
     )
 
@@ -621,6 +1190,16 @@ def write_recall_check(path: Path, records_by_pmid: dict[str, dict[str, object]]
     rows = []
     for row in existing:
         pmid = row.get("PMID", "").strip()
+        if row.get("controller_decision", "").strip() == "not_applicable":
+            rows.append(
+                {
+                    **row,
+                    "found_in_final_set": "not_applicable",
+                    "controller_decision": "not_applicable",
+                    "notes": "Initial draft contained no known citation anchors; recall is not applicable for this row.",
+                }
+            )
+            continue
         found = bool(pmid and pmid in seen_pmids)
         rows.append(
             {
@@ -628,6 +1207,20 @@ def write_recall_check(path: Path, records_by_pmid: dict[str, dict[str, object]]
                 "found_in_final_set": "yes" if found else "no",
                 "controller_decision": "recovered" if found else "recover_with_targeted_query",
                 "notes": "Recovered in PubMed candidate set." if found else "Not recovered by current query set; needs targeted query or manual lookup.",
+            }
+        )
+    if not rows:
+        rows.append(
+            {
+                "subsection_id": "none",
+                "citation_id": "none",
+                "citation": "none",
+                "PMID": "unknown",
+                "DOI": "unknown",
+                "discovery_provenance": "citation_needed",
+                "found_in_final_set": "not_applicable",
+                "controller_decision": "not_applicable",
+                "notes": "Initial draft contained no known citation anchors; recall is not applicable until retrieval finds candidates.",
             }
         )
     write_csv(
@@ -767,7 +1360,8 @@ def write_metrics(
     for row in query_rows:
         planned_by_sub.setdefault(row["subsection_id"], []).append(row["query_id"])
     for subsection_id, query_ids in planned_by_sub.items():
-        counts = [int(query_results[qid]["raw_count"]) for qid in query_ids]
+        executed_query_ids = [qid for qid in query_ids if qid in query_results]
+        counts = [int(query_results[qid]["raw_count"]) for qid in executed_query_ids]
         unique_pmids = {
             pmid
             for pmid in final_pmids_by_subsection.get(subsection_id, set())
@@ -781,12 +1375,14 @@ def write_metrics(
         recall_rate = "unknown"
         if known_denominator:
             recall_rate = f"{min(recovered, known_denominator) / known_denominator:.3f}"
-        status = subsection_controller_status(len(unique_pmids))
+        status = subsection_controller_status(
+            subsection_id, query_rows, query_results, len(unique_pmids)
+        )
         rows.append(
             {
                 "subsection_id": subsection_id,
                 "queries_planned": str(len(query_ids)),
-                "queries_run": str(len(query_ids)),
+                "queries_run": str(len(executed_query_ids)),
                 "total_pubmed_returned": str(sum(counts)),
                 "total_collected_for_review": str(len(unique_pmids)),
                 "draft_known_citation_count": str(known_count),
@@ -834,6 +1430,8 @@ def write_report(
     query_rows: list[dict[str, str]],
     query_results: dict[str, dict[str, object]],
     unique_record_count: int,
+    pending_redesign_count: int = 0,
+    executed_this_pass: int = 0,
 ) -> None:
     by_sub: dict[str, list[str]] = {}
     for row in query_rows:
@@ -843,11 +1441,12 @@ def write_report(
         "",
         "## Overall Status",
         "",
-        "`pass`",
+        "`query_redesign_required`" if pending_redesign_count else "`pass`",
         "",
         "## Metadata Store",
         "",
         f"Collected `{unique_record_count}` unique PubMed records into `pubmed_records.jsonl` and SQLite `pubmed_records`.",
+        f"Executed `{executed_this_pass}` query rows in this pass and preserved prior counted rows.",
         "",
         "## Subsection Counts",
         "",
@@ -856,37 +1455,51 @@ def write_report(
     ]
     by_sub_candidates = query_ids_by_subsection(query_results)
     for subsection_id, query_ids in sorted(by_sub.items()):
-        counts = [int(query_results[qid]["raw_count"]) for qid in query_ids]
+        executed_query_ids = [qid for qid in query_ids if qid in query_results]
+        counts = [int(query_results[qid]["raw_count"]) for qid in executed_query_ids]
         unique = len(by_sub_candidates.get(subsection_id, {}))
-        status = subsection_controller_status(unique)
+        status = subsection_controller_status(subsection_id, query_rows, query_results, unique)
         lines.append(
-            f"| {subsection_id} | {len(query_ids)} | {sum(counts)} | {unique} | {status} |"
+            f"| {subsection_id} | {len(executed_query_ids)} | {sum(counts)} | {unique} | {status} |"
         )
     lines.extend(
         [
             "",
             "## Next Step",
             "",
-            "Run subsection abstract review on `abstract_triage_first_pass.csv`; broad or empty queries should be revised before treating any subsection as finalized.",
+            (
+                f"Resolve `{pending_redesign_count}` pending query-redesign rows by LLM semantic redesign, "
+                "then rerun PubMed execution."
+                if pending_redesign_count
+                else "Run subsection abstract review on `abstract_triage_first_pass.csv`; broad or empty queries should be revised before treating any subsection as finalized."
+            ),
         ]
     )
     path.write_text("\n".join(lines) + "\n", encoding="utf-8")
 
 
-def update_check(path: Path, unique_record_count: int) -> None:
+def update_check(path: Path, unique_record_count: int, pending_redesign_count: int = 0) -> None:
     text = path.read_text(encoding="utf-8") if path.exists() else "# Subsection Retrieval Check\n"
+    ready = "no" if pending_redesign_count else "yes"
+    status = "query_redesign_required" if pending_redesign_count else "pass"
+    pending_line = (
+        f"\nPending semantic query redesign rows: `{pending_redesign_count}`.\n"
+        if pending_redesign_count
+        else ""
+    )
     block = f"""
 
 ## PubMed Metadata Compliance
 
-`pass`
+`{status}`
 
 Collected `{unique_record_count}` unique PubMed metadata records locally and
 mirrored them into SQLite `pubmed_records`.
+{pending_line}
 
 ## Ready For Abstract Review
 
-`yes`
+`{ready}`
 """
     if "## PubMed Metadata Compliance" not in text:
         text = text.rstrip() + block
@@ -965,7 +1578,7 @@ def update_sqlite(
                     str(raw_count),
                     count_status(raw_count),
                     controller_action(raw_count),
-                    "controller_to_assign" if raw_count == 0 or raw_count <= 5 or raw_count > 200 else "",
+                    ";".join(result.get("next_query_ids", [])),
                     revision_rationale(raw_count, len(result["pmids"])),
                     now,
                 ),

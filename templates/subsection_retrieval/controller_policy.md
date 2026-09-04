@@ -8,18 +8,20 @@ each draft subsection.
 ## Query Count Heuristics
 
 - `0`: too few unless the subsection is explicitly speculative.
-- `1-5`: usually too narrow unless recovered draft anchors make the subsection complete.
-- `6-200`: acceptable for LLM semantic abstract review.
-- `201-500`: collect a labeled sample and refine only if sampled abstracts are mostly noise.
-- `>500`: usually too many; refine before finalization unless the subsection is intentionally broad.
+- `1-4`: usually too narrow unless recovered draft anchors make the subsection complete.
+- `5-100`: target band for LLM semantic abstract review.
+- `101-110`: acceptable tolerance when the query is semantically specific.
+- `>110`: too many; collect at most a diagnostic sample and redesign query keywords before using the query as retrieval coverage.
+
+Evaluate counts at query level. Each subsection should have as many initial
+semantic queries as its evidence needs require, with distinct intent labels. Do
+not redesign acceptable-count queries.
 
 ## Controller Actions
 
 - `accept_for_abstract_review`
-- `refine_query`
-- `broaden_query`
+- `redesign_query_keywords`
 - `recover_draft_citation`
-- `manual_lookup`
 - `finalize_subsection_set`
 
 ## Stop Rule

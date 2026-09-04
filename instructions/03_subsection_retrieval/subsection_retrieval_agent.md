@@ -89,7 +89,12 @@ snapshot, and populates the subsection manifest from `drafts/initial_review.md`.
 The SQLite database is a resume/deduplication mirror; the CSV and Markdown files
 remain the human-auditable workflow artifacts.
 
-After query planning, execute PubMed queries and persist metadata:
+After query planning, an LLM query designer must read each subsection and fill
+the semantic query-design fields in `query_plan.csv`. The scaffolded queries are
+seeds only; do not execute PubMed until the initial query rows have
+`semantic_query_design_status=llm_semantic_designed`.
+
+After semantic query design, execute PubMed queries and persist metadata:
 
 ```bash
 python3 tools/03_subsection_retrieval/execute_pubmed_queries.py runs/<run_id>
@@ -101,19 +106,52 @@ and mirror them into SQLite `pubmed_records`. Later abstract review should read
 from these local artifacts rather than re-running PubMed searches unless the
 controller asks for query revision.
 
+If execution stages `query_redesign` rows because a query returns too many or
+too few records, those rows are also semantic LLM design tasks. They must not be
+executed until an LLM reads the subsection evidence need, parent query,
+diagnostic count failure, and false-positive risks, then rewrites or approves
+the row with `semantic_query_design_status=llm_semantic_redesigned`.
+
 ## Query Plan Rules
 
-For every subsection, create at least four initial PubMed queries:
+For every subsection, replace the scaffolded `semantic_seed` row with real
+initial PubMed queries, choosing the number the subsection semantically needs.
+A narrow or simple subsection may need a small number of queries; complex
+subsections with multiple entities, mechanisms, models, interventions, or
+citation-recall needs may need more. The query designer must read the
+subsection prose and citation-register notes as an evidence need, then identify:
 
-- `high_precision`: biologically constrained query derived primarily from
-  subsection prose and citation-register notes
-- `mechanism_expansion`: less entity-encoded expansion around the mechanism,
-  perturbation, assay, or causal relationship discussed in the subsection
-- `context_expansion`: less entity-encoded expansion around model, patient,
-  disease, treatment, assay, comparator context, or analogous system discussed
-  in the subsection
-- `recall_guard`: query designed to recover known draft citations and close
-  obvious synonym gaps
+- the claim or evidence need being searched;
+- the entity, protein/gene family, intervention, disease, model, or assay
+  anchors;
+- the mechanism, endpoint, causal relation, perturbation, or evidence type;
+- allowed synonyms and family analogs;
+- likely false positives and overbroad words to avoid.
+
+The query plan must fill these semantic fields for every initial query:
+
+- `semantic_evidence_need`
+- `semantic_entity_terms`
+- `semantic_mechanism_terms`
+- `semantic_endpoint_or_context_terms`
+- `query_false_positive_risks`
+- `semantic_query_design_status`
+- `semantic_query_designer`
+
+Use `semantic_query_design_status=llm_semantic_designed` only after an LLM has
+read the subsection and generated, rewritten, or explicitly approved the query.
+For controller-created `query_redesign` rows, use
+`semantic_query_design_status=llm_semantic_redesigned` only after an LLM has
+semantically redesigned that row from the parent query and count-failure
+diagnostics. Controller-generated redesign seeds are work orders, not
+executable PubMed queries.
+
+Each initial query for a subsection must have a distinct `query_type` intent.
+Choose intents from the subsection itself. Useful intents can include
+`primary_mechanism`, `clinical_context`, `citation_recall`, `model_or_assay`,
+`synonym_expansion`, `family_analog`, `negative_or_failed_result`,
+`combination_rationale`, `biomarker_context`, or another explicit
+subsection-specific intent. Use only intents that are genuinely needed.
 
 Use PubMed syntax where useful:
 
@@ -124,36 +162,63 @@ Use PubMed syntax where useful:
 - NOT blocks only for repeated false-positive patterns;
 - date filters only when justified by the user prompt or field history.
 
-Do not derive queries from the subsection title alone. The title may orient the
-query, but the query terms should come mainly from subsection prose,
-citation-register notes, and draft citation anchors. Queries should be
-scientifically stringent but not over-encoded with exact entity names. Prefer a
-small number of biologically meaningful OR blocks over long chains of exact
-entity AND terms when that improves recall.
+Do not derive queries from the subsection title alone or from raw ranked tokens.
+The title may orient the query, but the query design must come from semantic
+interpretation of subsection prose, citation-register notes, and draft citation
+anchors. Queries should be scientifically stringent but not over-encoded with
+exact entity names. Prefer a small number of biologically meaningful OR blocks
+over long chains of exact entity AND terms when that improves recall.
 
 ## Controller Loop Rules
 
-For each subsection, the controller must classify the result count:
+For each executed query, the controller must classify the query count and decide
+whether that query is acceptable or needs semantic redesign. Query counts are
+evaluated at query level.
 
-- `too_many`: likely noisy; refine by mechanism, context, assay, population, or
-  intervention.
-- `too_few`: broaden synonyms, remove over-specific filters, or search family
-  analogs when allowed by the structured instruction.
+- `too_many`: likely noisy; redesign query keywords by mechanism, context,
+  assay, population, intervention, endpoint, or false-positive exclusion.
+- `too_few`: redesign query keywords by broadening synonyms, removing
+  over-specific filters, or searching family analogs when allowed by the
+  structured instruction.
 - `acceptable`: enough for abstract review without overwhelming the subsection.
-- `needs_manual_search`: PubMed syntax or field terminology is failing.
 
 Default count guidance for one subsection:
 
 - `0`: too few unless the subsection is explicitly speculative.
-- `1-5`: usually too narrow unless draft citations are recovered and the
+- `1-4`: usually too narrow unless draft citations are recovered and the
   subsection is intrinsically sparse.
-- `6-200`: generally acceptable for LLM semantic abstract review.
-- `201-500`: collect a labeled top-relevance sample, then refine only if
-  sampled abstracts show low semantic fit.
-- `>500`: usually too many for one subsection; refine before finalization unless
-  the subsection is intentionally broad.
+- `5-100`: target band for LLM semantic abstract review.
+- `101-110`: near-boundary counts are acceptable when the query is semantically
+  specific.
+- `>110`: too many; collect at most a diagnostic sample and redesign query
+  keywords before using results for abstract-review coverage.
 
 These are controller heuristics, not scientific inclusion rules.
+Diagnostic samples from overbroad queries are not retrieval coverage and must
+not be the only source passed into semantic abstract review.
+
+Query redesign is an LLM semantic task, not a sampling task and not a mechanical
+keyword shuffle. When an individual query is too sparse or too broad, the
+controller may stage redesign seed rows. The LLM must read the subsection and
+decide which biological meaning should be tightened, broadened, substituted
+with synonyms, moved into OR blocks, moved out of the query, or excluded as a
+false-positive source. Validation must fail if any bad-count query lacks a
+redesign path, or if `controller_status` is inconsistent with unresolved
+redesign work.
+
+Do not redesign acceptable-count queries. Once a query has an acceptable count,
+freeze that row and preserve its PubMed count, diagnostics, and candidate
+source contribution. Later iterations should execute only newly
+LLM-redesigned rows or rows that do not yet have a recorded count.
+
+Use `subsection_metrics.csv` `controller_status` as the durable rollup of
+query-level decisions:
+
+- `query_revision_needed`: at least one query in the subsection still has
+  unresolved bad-count redesign work, or the subsection-level candidate set is
+  too large.
+- `abstract_review_needed`: every executed query in the subsection is acceptable
+  or has a resolved redesign path, and the candidate set is reviewable.
 
 For every query that is run or estimated, record query diagnostics: raw hit
 count, collected count, whether the result was truncated, sampling strategy,
@@ -237,7 +302,6 @@ If a draft citation is missing, the controller must decide:
 
 - `recover_with_targeted_query`
 - `drop_as_unverified_or_wrong`
-- `keep_for_manual_lookup`
 - `defer_to_full_text_step`
 
 This protects against accidentally losing the draft's useful anchors while also

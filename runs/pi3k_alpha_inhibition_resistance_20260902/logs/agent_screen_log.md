@@ -159,3 +159,9 @@ Stage 13 final review regenerated with compact numbered citations and a deduplic
 ## 2026-09-03T21:12:19Z - final_review
 
 Stage 13 final review regenerated without an Orientation section. Final review now contains Abstract, Main Review, Synthesis For Human Inspection, and References; workflow citation IDs and paper IDs are absent from the main text. Final validation passed.
+
+## 2026-09-04T05:29:28Z - validation:initial_review_draft
+
+Validation passed for `initial_review_draft`.
+
+- no warnings

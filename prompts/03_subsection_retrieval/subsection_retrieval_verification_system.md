@@ -13,13 +13,21 @@ Verify:
 - `subsection_manifest.csv` lists every substantive subsection in
   `drafts/initial_review.md`;
 - each subsection has stable IDs such as `SUB001`;
-- `query_plan.csv` includes at least one `high_precision`,
-  `mechanism_expansion`, `context_expansion`, and `recall_guard` query per
-  subsection;
+- `query_plan.csv` includes semantically designed initial queries per
+  subsection, with flexible query counts based on subsection complexity rather
+  than fixed tiers or fixed numeric ranges;
+- each subsection's initial queries use distinct `query_type` intent labels;
+- scaffold-only `semantic_seed` rows have been replaced before PubMed execution;
+- every executed initial query has
+  `semantic_query_design_status=llm_semantic_designed`;
+- every executed redesign query has
+  `semantic_query_design_status=llm_semantic_redesigned`;
 - queries are not derived from subsection titles alone;
 - queries are scientifically constrained but not over-encoded with exact entity
   names when mechanism/context recall requires broader PubMed retrieval;
 - `search_iteration_log.csv` records result-count status and controller action;
+- bad-count queries are evaluated at query level and point to redesigned query
+  rows, while acceptable-count queries are not redesigned;
 - `query_diagnostics.csv` records hit counts, sampling/noise, recall, and query
   revision decisions;
 - `pubmed_records.jsonl` contains locally downloaded PubMed metadata and

@@ -9,7 +9,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "00_workflow_control"))
 
-from init_workflow_state import parse_draft
+from init_workflow_state import parse_draft, write_manifest
 
 
 ARTIFACT_DIR = Path("artifacts/02_subsection_retrieval")
@@ -44,8 +44,12 @@ def main() -> int:
         (run_dir / directory).mkdir(parents=True, exist_ok=True)
 
     write_folder_readme(artifact_dir / "README.md")
+    write_manifest(run_dir, subsections)
     write_controller_policy(run_dir / QUERY_DIR / "controller_policy.md")
     write_abstract_review_rule(run_dir / QUERY_DIR / "abstract_review_rule.md")
+    write_semantic_query_design_work_order(
+        run_dir / QUERY_DIR / "semantic_query_design_work_order.md", subsections
+    )
     write_query_plan(run_dir / QUERY_DIR / "query_plan.csv", subsections)
     write_query_diagnostics(run_dir / QUERY_DIR / "query_diagnostics.csv", subsections)
     write_search_iteration_log(run_dir / QUERY_DIR / "search_iteration_log.csv", subsections)
@@ -155,6 +159,8 @@ def content_terms(subsection: dict[str, object], limit: int = 12) -> list[str]:
         "likely",
         "mechanism",
         "mechanisms",
+        "may",
+        "might",
         "metadata",
         "needed",
         "paper",
@@ -381,7 +387,7 @@ def entity_like_terms(terms: list[str]) -> list[str]:
 
 
 def query_ids_for_subsection(subsection_id: str) -> list[str]:
-    return [f"{subsection_id}-Q{index:03d}" for index in range(1, 5)]
+    return [f"{subsection_id}-Q001"]
 
 
 def recall_guard_query(subsection: dict[str, object]) -> str:
@@ -424,18 +430,39 @@ result counts, sampled precision, noise classes, and draft-citation recall.
 ## Query Count Heuristics
 
 - `0`: too few unless the subsection is explicitly speculative.
-- `1-5`: usually too narrow unless recovered draft anchors make the subsection complete.
-- `6-200`: acceptable for semantic abstract review.
-- `201-500`: collect a labeled sample and refine only if sampled abstracts are mostly noise.
-- `>500`: usually too many; refine before abstract review unless the subsection is intentionally broad.
+- `1-4`: usually too narrow unless recovered draft anchors make the subsection complete.
+- `5-100`: target band for semantic abstract review.
+- `101-110`: near-boundary counts are acceptable when the query is semantically
+  specific.
+- `>110`: too many; collect at most a diagnostic sample, redesign query keywords,
+  and use the redesigned acceptable-count queries for abstract-review coverage.
+
+Diagnostic samples from overbroad queries are not retrieval coverage. They can
+be used to diagnose noise and choose tighter keyword combinations, but they
+must not be the only source passed into semantic abstract review.
+
+Redesigned queries are not automatically executable keyword rewrites. Query
+counts are evaluated at the query level. When an individual query returns too
+many or too few records, the controller must create redesign work orders and an
+LLM query designer must semantically read the subsection evidence need plus the
+count failure before marking redesigned queries as executable.
+
+Do not redesign acceptable-count queries. Once a query has an acceptable count,
+freeze that row and preserve its PubMed count, diagnostics, and candidate
+source contribution. Later iterations should execute only newly
+LLM-redesigned rows or rows that do not yet have a recorded count.
+
+`subsection_metrics.csv` `controller_status` is the durable rollup of
+query-level decisions: use `query_revision_needed` when any query in the
+subsection still has unresolved redesign work,
+`abstract_review_needed` when query-level work is resolved and candidates are
+ready for abstract review.
 
 ## Controller Actions
 
 - `accept_for_abstract_review`
-- `refine_query`
-- `broaden_query`
+- `redesign_query_keywords`
 - `recover_draft_citation`
-- `manual_lookup`
 - `finalize_subsection_set`
 
 ## Stop Rule
@@ -444,9 +471,10 @@ Finalize a subsection only after query iterations, abstract-review decisions,
 draft-citation recall, and full-text routing are recorded. Placeholder or
 `not_run` records are allowed only to show that the controller scaffold exists;
 they do not establish that PubMed retrieval or abstract review is scientifically
-complete. A broad individual query can be marked for later refinement while the
-subsection still proceeds to semantic abstract review if the deduplicated
-candidate set is reviewable.
+complete. Any query with too many or too few hits must point to one or more
+redesigned keyword queries in the iteration log. The redesigned query must
+change the keyword strategy through semantic LLM redesign, not merely raise
+collection limits or take a larger subset from the original result count.
 """,
         encoding="utf-8",
     )
@@ -491,6 +519,67 @@ mechanism, assay logic, resistance class, or model relationship.
     )
 
 
+def write_semantic_query_design_work_order(path: Path, subsections: list[dict[str, object]]) -> None:
+    lines = [
+        "# Semantic Query Design Work Order",
+        "",
+        "Before PubMed execution, an LLM query designer must read each subsection",
+        "context as an evidence need and rewrite `query_plan.csv` into executable",
+        "semantic PubMed queries. The heuristic scaffold is only a seed.",
+        "",
+        "For each subsection, identify:",
+        "",
+        "- the claim or evidence need being searched;",
+        "- primary entity/family terms and allowed synonyms;",
+        "- mechanism, endpoint, assay, model, disease, or population terms;",
+        "- likely false-positive meanings and exclusions;",
+        "- query intents, choosing the number needed for the subsection complexity;",
+        "- query intents such as primary mechanism, context/model, method/readout,",
+        "  synonym/family analog, or citation recall only when scientifically needed.",
+        "",
+        "Replace each scaffolded `semantic_seed` row with real initial queries",
+        "before PubMed execution. Narrow/simple subsections may use a small",
+        "number of queries; complex subsections with multiple entities,",
+        "mechanisms, models, interventions, or citation-recall needs may use",
+        "more. Each initial query in a subsection must have a distinct",
+        "`query_type` intent label.",
+        "",
+        "Set `semantic_query_design_status` to `llm_semantic_designed` only after",
+        "the LLM has performed this reading and written the executable query.",
+        "",
+        "If PubMed execution later stages `query_redesign` rows, treat them as a",
+        "second semantic design work order. The LLM must read the parent",
+        "subsection, parent query, count status, diagnostic rationale, and false",
+        "positive risks, then rewrite the row and set",
+        "`semantic_query_design_status=llm_semantic_redesigned` before execution.",
+        "",
+        "## Subsections",
+        "",
+    ]
+    for subsection in subsections:
+        sid = str(subsection["subsection_id"])
+        lines.extend(
+            [
+                f"### {sid}: {subsection.get('subsection_title', '')}",
+                "",
+                "Draft prose:",
+                "",
+                " ".join(str(line) for line in subsection.get("prose_lines", [])),
+                "",
+                "Citation/search notes:",
+                "",
+            ]
+        )
+        for citation in subsection.get("citations", []):
+            lines.append(
+                f"- {citation.get('citation_id', '')}: {citation.get('citation', '')}; "
+                f"PMID={citation.get('PMID', '')}; DOI={citation.get('DOI', '')}; "
+                f"notes={citation.get('notes', '')}"
+            )
+        lines.append("")
+    path.write_text("\n".join(lines), encoding="utf-8")
+
+
 def write_query_plan(path: Path, subsections: list[dict[str, object]]) -> None:
     rows = []
     for subsection in subsections:
@@ -500,56 +589,25 @@ def write_query_plan(path: Path, subsections: list[dict[str, object]]) -> None:
             {
                 "subsection_id": sid,
                 "query_id": f"{sid}-Q001",
-                "query_type": "high_precision",
+                "query_type": "semantic_seed",
                 "pubmed_query": high_precision_query(subsection),
                 "required_terms": ";".join(terms[:4]),
                 "optional_terms": ";".join(terms[4:]),
                 "excluded_terms": "",
-                "expected_result_band": "6-200",
+                "expected_result_band": "5-100 target; 101-110 acceptable tolerance",
                 "recall_targets": recall_targets(subsection),
-                "query_rationale": "Focused query derived primarily from subsection prose and citation notes.",
-            }
-        )
-        rows.append(
-            {
-                "subsection_id": sid,
-                "query_id": f"{sid}-Q002",
-                "query_type": "mechanism_expansion",
-                "pubmed_query": mechanism_expansion_query(subsection),
-                "required_terms": ";".join(entity_like_terms(terms)[:2] or terms[:2]),
-                "optional_terms": ";".join(terms_matching(subsection, ("resistance", "acquired", "mutation", "loss", "bypass", "reactivation", "compensation", "escape", "inhibition"), 4)),
-                "excluded_terms": "",
-                "expected_result_band": "6-200",
-                "recall_targets": recall_targets(subsection),
-                "query_rationale": "Mechanism-focused expansion derived from subsection content.",
-            }
-        )
-        rows.append(
-            {
-                "subsection_id": sid,
-                "query_id": f"{sid}-Q003",
-                "query_type": "context_expansion",
-                "pubmed_query": context_expansion_query(subsection),
-                "required_terms": ";".join(terms[:3]),
-                "optional_terms": ";".join(terms[3:8]),
-                "excluded_terms": "",
-                "expected_result_band": "6-200",
-                "recall_targets": recall_targets(subsection),
-                "query_rationale": "Context or assay expansion derived from subsection prose.",
-            }
-        )
-        rows.append(
-            {
-                "subsection_id": sid,
-                "query_id": f"{sid}-Q004",
-                "query_type": "recall_guard",
-                "pubmed_query": recall_guard_query(subsection),
-                "required_terms": "",
-                "optional_terms": "",
-                "excluded_terms": "",
-                "expected_result_band": "1-20",
-                "recall_targets": recall_targets(subsection),
-                "query_rationale": "Recover known draft citations and citation anchors.",
+                "semantic_evidence_need": "needs_llm_semantic_design",
+                "semantic_entity_terms": "needs_llm_semantic_design",
+                "semantic_mechanism_terms": "needs_llm_semantic_design",
+                "semantic_endpoint_or_context_terms": "needs_llm_semantic_design",
+                "query_false_positive_risks": "needs_llm_semantic_design",
+                "semantic_query_design_status": "needs_llm_semantic_design",
+                "semantic_query_designer": "unassigned",
+                "redesign_parent_query_id": "",
+                "redesign_trigger_count_status": "",
+                "redesign_trigger_raw_hit_count": "",
+                "redesign_semantic_work_order": "",
+                "query_rationale": "Heuristic seed only; LLM must semantically redesign or approve before PubMed execution.",
             }
         )
     write_csv(path, rows)
@@ -559,18 +617,12 @@ def write_query_diagnostics(path: Path, subsections: list[dict[str, object]]) ->
     rows = []
     for subsection in subsections:
         sid = str(subsection["subsection_id"])
-        query_by_id = {
-            f"{sid}-Q001": high_precision_query(subsection),
-            f"{sid}-Q002": mechanism_expansion_query(subsection),
-            f"{sid}-Q003": context_expansion_query(subsection),
-            f"{sid}-Q004": recall_guard_query(subsection),
-        }
         for query_id in query_ids_for_subsection(sid):
             rows.append(
                 {
                     "subsection_id": sid,
                     "query_id": query_id,
-                    "query": query_by_id[query_id],
+                    "query": high_precision_query(subsection),
                     "raw_hit_count": "unknown",
                     "collected_count": "unknown",
                     "truncated_by_constraint": "false",
@@ -627,7 +679,7 @@ def write_subsection_metrics(path: Path, subsections: list[dict[str, object]]) -
         rows.append(
             {
                 "subsection_id": sid,
-                "queries_planned": "4",
+                "queries_planned": "1",
                 "queries_run": "0",
                 "total_pubmed_returned": "unknown",
                 "total_collected_for_review": "unknown",
@@ -667,7 +719,7 @@ def known_citation_rows(subsections: list[dict[str, object]]) -> list[dict[str, 
                     "evidence_role": citation["evidence_role"],
                     "draft_access_status": citation["draft_access_status"],
                     "venue_trust_label": citation["venue_trust_label"],
-                    "source_query_ids": f"{sid}-Q004",
+                    "source_query_ids": f"{sid}-Q001",
                     "reason": "Known draft citation carried into subsection retrieval scaffold.",
                 }
             )
@@ -760,10 +812,24 @@ def write_draft_citation_recall_check(path: Path, subsections: list[dict[str, ob
                     "DOI": citation["DOI"],
                     "discovery_provenance": citation["discovery_provenance"],
                     "found_in_final_set": "pending",
-                    "controller_decision": "keep_for_manual_lookup",
+                    "controller_decision": "recover_with_targeted_query",
                     "notes": "Recall check scaffolded; final status requires PubMed execution.",
                 }
             )
+    if not rows:
+        rows.append(
+            {
+                "subsection_id": "none",
+                "citation_id": "none",
+                "citation": "none",
+                "PMID": "unknown",
+                "DOI": "unknown",
+                "discovery_provenance": "citation_needed",
+                "found_in_final_set": "not_applicable",
+                "controller_decision": "not_applicable",
+                "notes": "Initial draft contained no known citation anchors; recall is not applicable until retrieval finds candidates.",
+            }
+        )
     write_csv(path, rows)
 
 
@@ -849,9 +915,11 @@ The scaffold covers {len(subsections)} draft subsections parsed from
 
 ## Query Plan Compliance
 
-Each subsection has one `high_precision` query and one `recall_guard` query.
-These are initial stringent queries and must be run or revised by the PubMed
-controller before scientific completion is claimed.
+Each subsection has one heuristic `semantic_seed` placeholder row. The LLM query
+designer must replace that placeholder with real initial semantic query intents
+before PubMed execution. The number of queries should be chosen from subsection
+complexity rather than a fixed numeric range. Initial query intent labels must
+be distinct within each subsection.
 
 ## Abstract Review Rule Compliance
 
@@ -906,11 +974,95 @@ def paper_id(pmid: str, counter: int) -> str:
     return f"DRAFT-CITATION-{counter:04d}"
 
 
+EMPTY_CSV_HEADERS = {
+    "abstract_triage_first_pass.csv": [
+        "subsection_id",
+        "paper_id",
+        "PMID",
+        "DOI",
+        "title",
+        "abstract",
+        "publication_types",
+        "year",
+        "source_query_ids",
+        "first_pass_decision",
+        "first_pass_rationale",
+        "first_pass_confidence",
+        "topic_match_type",
+        "semantic_fit_score",
+        "mechanism_match",
+        "entity_context_match",
+        "evidence_directness",
+        "key_relevant_abstract_text",
+        "missing_full_text_reason",
+        "triage_actor",
+        "synthesis_role",
+        "prescreen_hint",
+        "prescreen_rationale",
+        "prescreen_overlap_terms",
+    ],
+    "abstract_triage_rescue_pass.csv": [
+        "subsection_id",
+        "paper_id",
+        "PMID",
+        "DOI",
+        "title",
+        "abstract",
+        "publication_types",
+        "year",
+        "source_query_ids",
+        "first_pass_decision",
+        "first_pass_rationale",
+        "rescue_pass_decision",
+        "rescue_pass_rationale",
+        "rescue_pass_confidence",
+        "semantic_fit_score",
+        "mechanism_match",
+        "entity_context_match",
+        "evidence_directness",
+        "key_relevant_abstract_text",
+        "missing_full_text_reason",
+        "promotion_decision",
+        "synthesis_role",
+    ],
+    "draft_citation_recall_check.csv": [
+        "subsection_id",
+        "citation_id",
+        "citation",
+        "PMID",
+        "DOI",
+        "discovery_provenance",
+        "found_in_final_set",
+        "controller_decision",
+        "notes",
+    ],
+    "final_literature_sets.csv": [
+        "subsection_id",
+        "paper_id",
+        "PMID",
+        "PMCID",
+        "DOI",
+        "title",
+        "journal",
+        "publication_year",
+        "article_type",
+        "abstract_review_decision",
+        "evidence_role",
+        "draft_access_status",
+        "verified_access_status",
+        "venue_trust_label",
+        "source_query_ids",
+        "reason",
+    ],
+}
+
+
 def write_csv(path: Path, rows: list[dict[str, str]]) -> None:
-    if not rows:
-        raise ValueError(f"no rows for {path}")
+    fieldnames = list(rows[0]) if rows else EMPTY_CSV_HEADERS.get(path.name)
+    if not fieldnames:
+        raise ValueError(f"no rows or known header for {path}")
     with path.open("w", newline="", encoding="utf-8") as handle:
-        writer = csv.DictWriter(handle, fieldnames=list(rows[0]))
+        writer = csv.DictWriter(handle, fieldnames=fieldnames)
         writer.writeheader()
         writer.writerows(rows)
 

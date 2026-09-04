@@ -448,7 +448,6 @@ def check_initial_review_draft(run_dir: Path, errors: list[str]) -> None:
     }
     header = "| citation_id | citation | PMID | DOI | evidence_role | draft_access_status | venue_trust_label | discovery_provenance | notes |"
     min_chapters = 6
-    min_subsections = 18
     min_rows_per_register = 4
     min_words_per_subsection = 150
     min_paragraphs_per_subsection = 2
@@ -461,9 +460,11 @@ def check_initial_review_draft(run_dir: Path, errors: list[str]) -> None:
     )
     if chapter_count < min_chapters:
         errors.append(f"draft has {chapter_count} chapters; expected at least {min_chapters}")
+    min_subsections = max(min_chapters * 2, chapter_count * 2)
     if subsection_count < min_subsections:
         errors.append(
-            f"draft has {subsection_count} subsections; expected at least {min_subsections}"
+            f"draft has {subsection_count} subsections; expected at least {min_subsections} "
+            "(at least 2 substantive subsections per chapter)"
         )
 
     subsection_blocks = extract_subsection_prose_blocks(draft)
@@ -620,6 +621,8 @@ def check_subsection_retrieval(
     artifact_dir = run_dir / "artifacts/02_subsection_retrieval"
     manifest_path = artifact_dir / "01_scope/subsection_manifest.csv"
     query_plan_path = artifact_dir / "02_queries/query_plan.csv"
+    query_diagnostics_path = artifact_dir / "02_queries/query_diagnostics.csv"
+    semantic_query_work_order_path = artifact_dir / "02_queries/semantic_query_design_work_order.md"
     iteration_path = artifact_dir / "02_queries/search_iteration_log.csv"
     metrics_path = artifact_dir / "06_outputs/subsection_metrics.csv"
     recall_path = artifact_dir / "05_recall/draft_citation_recall_check.csv"
@@ -646,6 +649,8 @@ def check_subsection_retrieval(
         draft_path,
         manifest_path,
         query_plan_path,
+        query_diagnostics_path,
+        semantic_query_work_order_path,
         iteration_path,
         metrics_path,
         recall_path,
@@ -674,6 +679,7 @@ def check_subsection_retrieval(
     final_rows = read_csv_rows(final_set_path, errors)
     queue_rows = read_csv_rows(queue_path, errors)
     pubmed_index_rows = read_csv_rows(pubmed_index_path, errors)
+    diagnostic_rows = read_csv_rows(query_diagnostics_path, errors)
     pubmed_record_count = check_pubmed_records_jsonl(pubmed_records_path, errors)
 
     if not manifest_rows:
@@ -695,29 +701,36 @@ def check_subsection_retrieval(
                 f"subsection_manifest.csv expected subsection_id {expected_id}, found {subsection_id}"
             )
 
-    query_types_by_subsection: dict[str, set[str]] = {
-        subsection_id: set() for subsection_id in manifest_ids
+    check_semantic_query_design(query_rows, errors)
+    initial_query_rows_by_subsection: dict[str, list[dict[str, str]]] = {
+        subsection_id: [] for subsection_id in manifest_ids
     }
     for row in query_rows:
         subsection_id = row.get("subsection_id", "")
-        query_type = row.get("query_type", "")
-        if subsection_id in query_types_by_subsection:
-            query_types_by_subsection[subsection_id].add(query_type)
-    for subsection_id, query_types in query_types_by_subsection.items():
-        if "high_precision" not in query_types:
-            errors.append(f"{subsection_id} is missing a high_precision query")
-        if "mechanism_expansion" not in query_types:
-            errors.append(f"{subsection_id} is missing a mechanism_expansion query")
-        if "context_expansion" not in query_types:
-            errors.append(f"{subsection_id} is missing a context_expansion query")
-        if "recall_guard" not in query_types:
-            errors.append(f"{subsection_id} is missing a recall_guard query")
+        if subsection_id in initial_query_rows_by_subsection and row.get("query_type") != "query_redesign":
+            initial_query_rows_by_subsection[subsection_id].append(row)
+    for subsection_id, initial_rows in initial_query_rows_by_subsection.items():
+        query_count = len(initial_rows)
+        if query_count < 1:
+            errors.append(
+                f"{subsection_id} has no initial semantic query rows"
+            )
+        query_types = [row.get("query_type", "").strip() for row in initial_rows]
+        if any(query_type == "semantic_seed" for query_type in query_types):
+            errors.append(f"{subsection_id} still has scaffold-only semantic_seed query rows")
+        duplicate_types = sorted(
+            query_type for query_type in set(query_types) if query_types.count(query_type) > 1
+        )
+        if duplicate_types:
+            errors.append(
+                f"{subsection_id} has duplicate initial query_type intent labels: "
+                + ", ".join(duplicate_types)
+            )
 
     allowed_count_status = {
         "too_many",
         "acceptable",
         "too_few",
-        "needs_manual_search",
         "not_run",
         "unknown",
     }
@@ -725,6 +738,71 @@ def check_subsection_retrieval(
         count_status = row.get("count_status", "")
         if count_status not in allowed_count_status:
             errors.append(f"invalid count_status in search_iteration_log.csv: {count_status}")
+    query_rows_by_id = {row.get("query_id", ""): row for row in query_rows}
+    controller_status_by_subsection = {
+        row.get("subsection_id", ""): row.get("controller_status", "")
+        for row in metrics_rows
+    }
+    for row in iteration_rows:
+        count_status = row.get("count_status", "")
+        query_id = row.get("query_id", "")
+        subsection_id = row.get("subsection_id", "")
+        next_query_ids_for_row = [
+            value.strip()
+            for value in row.get("next_query_id", "").split(";")
+            if value.strip() and value.strip() != "controller_to_assign"
+        ]
+        if count_status == "acceptable" and next_query_ids_for_row:
+            errors.append(
+                f"{query_id} has acceptable count_status but points to redesigned queries"
+            )
+        if count_status not in {"too_many", "too_few"}:
+            continue
+        parent_query = query_rows_by_id.get(query_id, {})
+        next_query_ids = next_query_ids_for_row
+        if not next_query_ids:
+            errors.append(
+                f"{query_id} has {count_status} count_status but does not point to a redesigned query"
+            )
+            continue
+        parent_keywords = query_keyword_set(parent_query.get("pubmed_query", ""))
+        for next_query_id in next_query_ids:
+            child_query = query_rows_by_id.get(next_query_id)
+            if not child_query:
+                errors.append(
+                    f"{query_id} points to missing redesigned query {next_query_id}"
+                )
+                continue
+            if child_query.get("query_type") != "query_redesign":
+                errors.append(
+                    f"{query_id} points to {next_query_id}, but query_type is not query_redesign"
+                )
+            if child_query.get("redesign_parent_query_id", "").strip() != query_id:
+                errors.append(
+                    f"{next_query_id} must record redesign_parent_query_id={query_id}"
+                )
+            child_keywords = query_keyword_set(child_query.get("pubmed_query", ""))
+            if not child_keywords or child_keywords == parent_keywords:
+                errors.append(
+                    f"{next_query_id} does not materially redesign keywords from parent {query_id}"
+                )
+            if count_status == "too_many" and child_query.get("pubmed_query", "") == parent_query.get("pubmed_query", ""):
+                errors.append(
+                    f"{next_query_id} repeats overbroad parent query {query_id} instead of tightening it"
+                )
+        if count_status == "too_many":
+            diagnostic = next(
+                (
+                    diagnostic_row
+                    for diagnostic_row in diagnostic_rows
+                    if diagnostic_row.get("query_id") == query_id
+                ),
+                {},
+            )
+            if diagnostic and diagnostic.get("sample_strategy") != "diagnostic_sample_only":
+                errors.append(
+                    f"{query_id} has too_many count_status but sample_strategy is not diagnostic_sample_only"
+                )
 
     if len(metrics_rows) != len(manifest_rows):
         errors.append(
@@ -742,7 +820,6 @@ def check_subsection_retrieval(
         "rescue_review_needed",
         "finalized",
         "semantic_abstract_review_complete",
-        "manual_search_needed",
         "blocked",
         "unknown",
     }
@@ -750,6 +827,51 @@ def check_subsection_retrieval(
         status = row.get("controller_status", "")
         if status not in allowed_controller_status:
             errors.append(f"invalid controller_status in subsection_metrics.csv: {status}")
+        subsection_id = row.get("subsection_id", "")
+        pending_redesign_count = sum(
+            1
+            for query_row in query_rows
+            if query_row.get("subsection_id") == subsection_id
+            and query_row.get("semantic_query_design_status") == "needs_llm_semantic_redesign"
+        )
+        unexecuted_query_count = sum(
+            1
+            for query_row in query_rows
+            if query_row.get("subsection_id") == subsection_id
+            and query_row.get("query_id", "").strip()
+            and not any(
+                iteration_row.get("query_id", "").strip()
+                == query_row.get("query_id", "").strip()
+                for iteration_row in iteration_rows
+            )
+        )
+        if pending_redesign_count and status != "query_revision_needed":
+            errors.append(
+                f"{subsection_id} has pending semantic query redesign rows but controller_status={status}"
+            )
+        if unexecuted_query_count and status != "query_revision_needed":
+            errors.append(
+                f"{subsection_id} has designed query rows without execution records but controller_status={status}"
+            )
+        if unexecuted_query_count:
+            errors.append(
+                f"{subsection_id} has {unexecuted_query_count} designed query rows without execution records"
+            )
+        bad_query_rows = [
+            row_item
+            for row_item in iteration_rows
+            if row_item.get("subsection_id") == subsection_id
+            and row_item.get("count_status") in {"too_many", "too_few"}
+        ]
+        unresolved_bad_query_rows = [
+            row_item
+            for row_item in bad_query_rows
+            if not row_item.get("next_query_id", "").strip()
+        ]
+        if (pending_redesign_count or unexecuted_query_count or unresolved_bad_query_rows) and status != "query_revision_needed":
+            errors.append(
+                f"{subsection_id} has bad-count query work but controller_status={status}"
+            )
         for field in (
             "draft_citation_recall_rate",
             "abstract_rejection_rate",
@@ -769,7 +891,6 @@ def check_subsection_retrieval(
         "recovered",
         "recover_with_targeted_query",
         "drop_as_unverified_or_wrong",
-        "keep_for_manual_lookup",
         "defer_to_full_text_step",
         "not_applicable",
         "unknown",
@@ -837,6 +958,72 @@ def read_csv_rows(path: Path, errors: list[str]) -> list[dict[str, str]]:
     except csv.Error as exc:
         errors.append(f"could not parse CSV {path}: {exc}")
         return []
+
+
+def query_keyword_set(query: str) -> set[str]:
+    keywords: set[str] = set()
+    for token in re.findall(
+        r'"([^"]+)"\[Title/Abstract\]|([A-Za-z0-9][A-Za-z0-9+/.-]*)\[Title/Abstract\]|([A-Za-z0-9][A-Za-z0-9+/.-]*)',
+        query,
+    ):
+        term = next((part for part in token if part), "").strip().strip(".").lower()
+        if not term or term in {"and", "or", "not", "title", "abstract", "pmid", "title/abstract"}:
+            continue
+        keywords.add(term)
+    return keywords
+
+
+def check_semantic_query_design(query_rows: list[dict[str, str]], errors: list[str]) -> None:
+    required_fields = {
+        "semantic_evidence_need",
+        "semantic_entity_terms",
+        "semantic_mechanism_terms",
+        "semantic_endpoint_or_context_terms",
+        "query_false_positive_risks",
+        "semantic_query_design_status",
+        "semantic_query_designer",
+    }
+    if not query_rows:
+        return
+    missing_fields = sorted(required_fields - set(query_rows[0]))
+    if missing_fields:
+        errors.append(
+            "query_plan.csv is missing semantic query-design fields: "
+            + ", ".join(missing_fields)
+        )
+        return
+    for row in query_rows:
+        query_id = row.get("query_id", "unknown")
+        status = row.get("semantic_query_design_status", "").strip()
+        accepted_statuses = (
+            {"llm_semantic_redesigned"}
+            if row.get("query_type") == "query_redesign"
+            else {"llm_semantic_designed"}
+        )
+        if status not in accepted_statuses:
+            errors.append(
+                f"{query_id} must be semantically designed by an LLM before PubMed execution; "
+                f"found semantic_query_design_status={status or 'missing'}"
+            )
+        for field in sorted(required_fields - {"semantic_query_design_status"}):
+            value = row.get(field, "").strip()
+            if not value or value in {
+                "unknown",
+                "unassigned",
+                "needs_llm_semantic_design",
+                "needs_llm_semantic_redesign",
+            }:
+                errors.append(f"{query_id} has unfilled semantic query-design field: {field}")
+        rationale = row.get("query_rationale", "").lower()
+        if "heuristic seed only" in rationale or "work-order seed" in rationale:
+            errors.append(f"{query_id} still has heuristic-seed query_rationale")
+        if row.get("query_type") == "query_redesign":
+            if not row.get("redesign_parent_query_id", "").strip():
+                errors.append(f"{query_id} is missing redesign_parent_query_id")
+            if not row.get("redesign_trigger_count_status", "").strip():
+                errors.append(f"{query_id} is missing redesign_trigger_count_status")
+            if not row.get("redesign_semantic_work_order", "").strip():
+                errors.append(f"{query_id} is missing redesign_semantic_work_order")
 
 
 def check_pubmed_records_jsonl(path: Path, errors: list[str]) -> int:
@@ -1224,7 +1411,10 @@ def check_semantic_abstract_review_pilot(run_dir: Path, errors: list[str]) -> No
                 "reviewed_at",
             ):
                 value = row.get(field, "").strip()
-                if not value or value in {"unknown", "not_reviewed"}:
+                unfilled_values = {"unknown", "not_reviewed"}
+                if field == "synthesis_role":
+                    unfilled_values = {"unknown", "not_reviewed"}
+                if not value or value in unfilled_values:
                     errors.append(f"{field} is not filled on {row_label}")
             check_llm_review_provenance(row, row_label, errors)
 
@@ -1354,7 +1544,10 @@ def check_semantic_abstract_review_complete(run_dir: Path, errors: list[str]) ->
                 "reviewed_at",
             ):
                 value = row.get(field, "").strip()
-                if not value or value in {"unknown", "not_reviewed"}:
+                unfilled_values = {"unknown", "not_reviewed"}
+                if field == "synthesis_role":
+                    unfilled_values = {"unknown", "not_reviewed"}
+                if not value or value in unfilled_values:
                     errors.append(f"{field} is not filled on {row_label}")
             check_llm_review_provenance(row, row_label, errors)
 

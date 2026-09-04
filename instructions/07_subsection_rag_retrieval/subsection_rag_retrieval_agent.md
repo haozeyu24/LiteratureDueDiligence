@@ -22,15 +22,15 @@ The SQLite `workflow_steps` row for `full_text_rag_index` must have
 
 Stage 7 embeds one query per subsection with the same embedding model used in
 Stage 6, normally `text-embedding-3-small`. If `OPENAI_API_KEY` is missing, stop
-and ask the user to add it to the repository-root `.env` file or provide an
-explicit `--env-file` path.
+and ask the user to add it to the shell environment or provide an explicit
+`--env-file` path, preferably to a private env file outside the repository.
 
 ## Required Action
 
 Run:
 
 ```bash
-python3 tools/07_subsection_rag_retrieval/build_subsection_rag_retrieval.py runs/<run_id> --env-file .env
+python3 tools/07_subsection_rag_retrieval/build_subsection_rag_retrieval.py runs/<run_id> --env-file ~/.config/literature-due-diligence/env
 ```
 
 Default retrieval behavior:
