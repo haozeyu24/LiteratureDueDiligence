@@ -165,8 +165,11 @@ python3 tools/00_workflow_control/validate_step.py prompt_intake runs/<run_id>
 
 ### 2. Initial Review Draft
 
-Use a frontier model or local agent to generate the first review draft from the
-structured instruction.
+Use the current user-selected agent or model to generate the first review draft
+from the structured instruction. A future workflow version may recommend the
+most recent frontier model API for this stage to improve conceptual recall,
+mechanism breadth, citation clues, and search-target coverage, but V1 must not
+treat that API as a hard dependency.
 
 The draft must be verification-ready, not merely polished prose. Every
 substantive subsection must include a `#### Citation Register` table listing the

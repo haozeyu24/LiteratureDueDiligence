@@ -3,11 +3,13 @@
 A local, agent-run workflow for biomedical and drug-discovery literature
 reviews.
 
-The workflow starts with a broad frontier-model draft, then treats that draft as
-a map of claims to verify. Later stages retrieve PubMed literature, review
-abstracts semantically, ingest primary full text, build a RAG index, and perform
-evidence-grounded subsection rewriting from paper packets and narrative full
-text.
+The workflow starts with a broad LLM-generated draft, then treats that draft as
+a map of claims to verify. In V1, the initial drafting stage should use whatever
+agent or model the user is already running; a dedicated frontier-model API call
+is not required for the workflow to operate. Later stages retrieve PubMed
+literature, review abstracts semantically, ingest primary full text, build a RAG
+index, and perform evidence-grounded subsection rewriting from paper packets and
+narrative full text.
 
 This repository is designed for Codex, Claude Code, or similar local agentic
 coding environments. It does not require an end-to-end app or custom hosted
@@ -21,6 +23,12 @@ passing validation gates.
   evidence that contradicts the draft's original framing. Human review should
   weight this confirmation-bias risk higher for novel, controversial, or weakly
   established mechanisms.
+- Initial drafting model choice: V1 does not require a special API model for
+  Stage 2. Future workflow improvements should consider recommending the most
+  recent frontier model API for the initial draft, because stronger models may
+  improve conceptual recall, mechanism breadth, useful citation clues, and
+  search-target coverage. This should remain a recommendation for quality, not a
+  hard dependency.
 - Correlated model bias: drafting, query construction, rewriting, and
   verification may be done by the same model or model family, so the verifier
   may share the generator's blind spots. This workflow deliberately avoids
